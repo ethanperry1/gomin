@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -20,7 +21,7 @@ func main() {
 	}
 }
 
-//gobar:0.9
+//gobar:min:1.0
 func run() error {
 	root := os.Getenv("ROOT")
 	if root == "" {
@@ -68,82 +69,3 @@ func run() error {
 	return nil
 }
 
-type Emplacer interface {
-	Emplace(file string, ast *ast.File)
-}
-
-type FileEmplacer struct {
-	asts map[string]*ast.File
-}
-
-func NewEmplacer(asts map[string]*ast.File) *FileEmplacer {
-	return &FileEmplacer{
-		asts: asts,
-	}
-}
-
-func (emplacer *FileEmplacer) Emplace(file string, fileTree *ast.File) {
-	emplacer.asts[file] = fileTree
-	for _, decl := range fileTree.Decls {
-		funcDecl, ok := decl.(*ast.FuncDecl)
-		if !ok {
-			continue
-		}
-
-		fmt.Printf("%d\n", funcDecl.Body.Pos())
-	}
-}
-
-type Visitor struct {
-	emplacer     Emplacer
-	Readdirnames func(n int) (names []string, err error)
-}
-
-func NewVisitor(emplacer     Emplacer, options ...func(*Visitor)) *Visitor {
-	visitor := &Visitor{
-		emplacer: emplacer,
-	}
-
-	for _, option := range options {
-		option(visitor)
-	}
-
-	return visitor
-}
-
-func (visitor *Visitor) Visit(path string, d fs.DirEntry, err error) error {
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-
-	names, err := file.Readdirnames(-1)
-	if err != nil {
-		return err
-	}
-
-	for _, name := range names {
-		// Ignore nested modules.
-		if name == "go.mod" {
-			return nil
-		}
-	}
-
-	for _, name := range names {
-		if strings.HasSuffix(name, ".go") {
-			joined := filepath.Join(path, name)
-			f, err := parser.ParseFile(token.NewFileSet(), joined, nil, parser.ParseComments)
-			if err != nil {
-				return err
-			}
-
-			visitor.emplacer.Emplace(joined, f)
-		}
-	}
-
-	return nil
-}

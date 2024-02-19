@@ -1,3 +1,0 @@
-package test
-
-func F() {}
