@@ -100,9 +100,12 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 			}
 		}
 
-		packDirectives, err := psr.ParseComments(packageComments)
+		packDirectives, err := psr.ParsePkgComments(packageComments)
 		if err != nil {
-			return nil, err
+			return nil, &InvalidPackageDirectiveError{
+				name: dir,
+				err:  err,
+			}
 		}
 
 		pack.WithDirectives(packDirectives...)
@@ -127,7 +130,11 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 			fileDirectives, err := psr.ParseComments(fileComments, packDirectives...)
 			if err != nil {
-				return nil, err
+				return nil, &InvalidFileDirectiveError{
+					err:  err,
+					name: name,
+					dir:  dir,
+				}
 			}
 
 			fl.WithDirectives(fileDirectives...)
@@ -148,7 +155,12 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 				blockDirectives, err := psr.ParseComments(decl.Comments, fileDirectives...)
 				if err != nil {
-					return nil, err
+					return nil, &InvalidBlockDirectiveError{
+						err:   err,
+						dir:   dir,
+						name:  name,
+						block: decl.Name,
+					}
 				}
 
 				block.WithDirectives(blockDirectives...)

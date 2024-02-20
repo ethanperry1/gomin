@@ -1,3 +1,4 @@
+//gobar:pkg:exclude
 package parser
 
 import (
@@ -8,6 +9,7 @@ import (
 
 const (
 	gobar = "gobar:"
+	pkg   = "pkg:"
 )
 
 var directiveRegex = regexp.MustCompile(`\/\/\s*gobar:[a-z]+`)
@@ -34,7 +36,8 @@ func (parser *Parser) ParseComment(comment string, parents ...tokens.Comparer) (
 	dir, ok := parser.commands[tokens.Command(components[0])]
 	if !ok {
 		return nil, &UnknownCommandError{
-			command: components[0],
+			command:   components[0],
+			directive: directive,
 		}
 	}
 
@@ -44,13 +47,33 @@ func (parser *Parser) ParseComment(comment string, parents ...tokens.Comparer) (
 func (parser *Parser) ParseComments(comments []string, parents ...tokens.Comparer) ([]tokens.Comparer, error) {
 	var comparers []tokens.Comparer
 	for _, comment := range comments {
-		command, err := parser.ParseComment(comment, parents...)
-		if err != nil {
-			return nil, err
+		if !strings.Contains(comment, pkg) {
+			command, err := parser.ParseComment(comment, parents...)
+			if err != nil {
+				return nil, err
+			}
+	
+			if command != nil {
+				comparers = append(comparers, command)
+			}
 		}
+	}
 
-		if command != nil {
-			comparers = append(comparers, command)
+	return comparers, nil
+}
+
+func (parser *Parser) ParsePkgComments(comments []string, parents ...tokens.Comparer) ([]tokens.Comparer, error) {
+	var comparers []tokens.Comparer
+	for _, comment := range comments {
+		if strings.Contains(comment, pkg) {
+			command, err := parser.ParseComment(comment, parents...)
+			if err != nil {
+				return nil, err
+			}
+	
+			if command != nil {
+				comparers = append(comparers, command)
+			}
 		}
 	}
 

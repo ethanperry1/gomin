@@ -9,13 +9,15 @@ type (
 
 const (
 	Min     Command = "min"
+	Pkg     Command = "pkg"
 	Exclude Command = "exclude"
 )
 
 var (
 	CreatorsByCommand = map[Command]Creator{
 		Min:     CreateMinimumFromCommand,
-		Exclude: nil,
+		Pkg:     CreatePackageCommandFromCommand,
+		Exclude: CreateExcludeFromCommand,
 	}
 )
 
@@ -27,6 +29,7 @@ type Coverage interface {
 type Comparer interface {
 	Compare(Coverage) (Coverage, error)
 	Type() Command
+	Directive() []string
 }
 
 func CreateMinimumFromCommand(components ...string) (Comparer, error) {
@@ -48,32 +51,22 @@ func CreateMinimumFromCommand(components ...string) (Comparer, error) {
 	}
 
 	return &MinimumCommand{
-		minimum: res,
+		minimum:   res,
+		directive: components,
 	}, nil
 }
 
 type MinimumCommand struct {
-	minimum     float64
-	funcName    string
-	fileName    string
-	packageName string
-}
-
-func NewMinimum(minimum float64) *MinimumCommand {
-	return &MinimumCommand{
-		minimum: minimum,
-	}
+	minimum   float64
+	directive []string
 }
 
 func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
 	actual := float64(cov.Covered()) / float64(cov.Statements())
 	if actual < minimum.minimum {
 		return nil, &ActualFunctionCoverageBeneathMinimumError{
-			minimum:     minimum.minimum,
-			actual:      actual,
-			funcName:    minimum.funcName,
-			fileName:    minimum.fileName,
-			packageName: minimum.packageName,
+			minimum: minimum.minimum,
+			actual:  actual,
 		}
 	}
 
@@ -82,4 +75,58 @@ func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
 
 func (minimum *MinimumCommand) Type() Command {
 	return Min
+}
+
+func (minimum *MinimumCommand) Directive() []string {
+	return minimum.directive
+}
+
+func CreatePackageCommandFromCommand(components ...string) (Comparer, error) {
+	if len(components) < 2 {
+		return nil, &MissingArgument{}
+	}
+
+	switch components[1] {
+	case "min":
+		return CreateMinimumFromCommand(components[1:]...)
+	case "exclude":
+		return CreateExcludeFromCommand(components[1:]...)
+	default:
+		return nil, &InvalidPackageCommandError{
+			command: components[1],
+		}
+	}
+}
+
+func CreateExcludeFromCommand(components ...string) (Comparer, error) {
+	return &ExcludeCommand{
+		directive: components,
+	}, nil
+}
+
+type ExcludeCommand struct {
+	directive []string
+}
+
+
+func (minimum *ExcludeCommand) Compare(cov Coverage) (Coverage, error) {
+	return &ExcludeResult{}, nil
+}
+
+func (minimum *ExcludeCommand) Type() Command {
+	return Exclude
+}
+
+func (minimum *ExcludeCommand) Directive() []string {
+	return minimum.directive
+}
+
+type ExcludeResult struct{}
+
+func (*ExcludeResult) Statements() int {
+	return 0
+}
+
+func (*ExcludeResult) Covered() int {
+	return 0
 }

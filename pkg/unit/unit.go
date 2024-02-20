@@ -52,7 +52,10 @@ func (project *Project) Evaluate() (Coverage, error) {
 	for _, child := range project.children {
 		cov, err := child.Evaluate()
 		if err != nil {
-			return nil, err
+			return nil, &ProjectError{
+				err:  err,
+				name: project.name,
+			}
 		}
 
 		result.Covd += cov.Covered()
@@ -64,7 +67,11 @@ func (project *Project) Evaluate() (Coverage, error) {
 	for _, directive := range project.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
-			return nil, err
+			return nil, &ProjectDirectiveError{
+				err:       err,
+				directive: directive.Directive(),
+				name:      project.name,
+			}
 		}
 	}
 
@@ -104,7 +111,10 @@ func (pack *Package) Evaluate() (Coverage, error) {
 	for _, child := range pack.children {
 		cov, err := child.Evaluate()
 		if err != nil {
-			return nil, err
+			return nil, &PackageError{
+				err:  err,
+				name: pack.name,
+			}
 		}
 
 		result.Covd += cov.Covered()
@@ -116,7 +126,11 @@ func (pack *Package) Evaluate() (Coverage, error) {
 	for _, directive := range pack.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
-			return nil, err
+			return nil, &PackageDirectiveError{
+				err:       err,
+				directive: directive.Directive(),
+				name:      pack.name,
+			}
 		}
 	}
 
@@ -156,7 +170,10 @@ func (file *File) Evaluate() (Coverage, error) {
 	for _, child := range file.children {
 		cov, err := child.Evaluate()
 		if err != nil {
-			return nil, err
+			return nil, &FileError{
+				err:  err,
+				name: file.name,
+			}
 		}
 
 		result.Covd += cov.Covered()
@@ -168,7 +185,11 @@ func (file *File) Evaluate() (Coverage, error) {
 	for _, directive := range file.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
-			return nil, err
+			return nil, &FileDirectiveError{
+				err:       err,
+				name:      file.name,
+				directive: directive.Directive(),
+			}
 		}
 	}
 
@@ -203,7 +224,11 @@ func (block *Block) Evaluate() (Coverage, error) {
 	for _, directive := range block.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
-			return nil, err
+			return nil, &BlockDirectiveError{
+				err:       err,
+				name:      block.name,
+				directive: directive.Directive(),
+			}
 		}
 	}
 

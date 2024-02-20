@@ -25,7 +25,7 @@ func run() error {
 		return err
 	}
 
-	fmt.Printf("Evaluated overall coverage of %0.2f%% -- %d statements covered of %d total statements.", float64(cov.Covered()) / float64(cov.Statements()), cov.Covered(), cov.Statements())
+	fmt.Printf("Evaluated overall coverage of %0.2f%% -- %d statement(s) covered of %d total statement(s).\n", float64(cov.Covered()) / float64(cov.Statements()), cov.Covered(), cov.Statements())
 
 	return nil
 }

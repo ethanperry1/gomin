@@ -1,4 +1,3 @@
-//gobar:min:1.00
 package visitor
 
 import (
