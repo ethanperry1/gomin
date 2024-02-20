@@ -2,7 +2,7 @@
 
 Raise the bar for your code quality and unit test coverage.
 
-_Warning:_ This library is still in beta and may contain unresolved bugs.
+_Warning:_ This library is still under development and may contain unresolved bugs.
 
 ## Usage
 
