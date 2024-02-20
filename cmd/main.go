@@ -18,8 +18,13 @@ func main() {
 func run() error {
 	root := os.Getenv("ROOT")
 	profile := os.Getenv("PROFILE")
+	name := os.Getenv("NAME")
+	// overall := os.Getenv("OVERALL_MIN_COV")
+	// defPackage := os.Getenv("DEFAULT_MIN_PACKAGE_COV")
+	// defFile := os.Getenv("DEFAULT_MIN_PACKAGE_COV")
+	// defblock := os.Getenv("DEFAULT_MIN_PACKAGE_COV")
 
-	evaluator := evaluate.New("gobar", root, profile)
+	evaluator := evaluate.New(name, root, profile)
 	cov, err := evaluator.EvalCoverage()
 	if err != nil {
 		return err

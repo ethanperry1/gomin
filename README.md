@@ -24,6 +24,7 @@ __Types__
 1. _min_ | verifies that the block, file, or package has a minimum number of covered statements.
 2. _exclude_ | excludes a block, file, or package from overall unit test coverage calculations.
 3. _pkg_ | denotes that the directive should affect the package level.
+4. _default_ | 
 
 __Formatting__
 
@@ -57,6 +58,47 @@ func MyFunction() {...}
 var myFunc = func() {...}
 ```
 
+__Running__
+
+As executable:
+
+```sh
+# Profile must be present:
+# go test ./... -coverprofile=profile
+
+# Optional parameters:
+# export OVERALL_MIN_COV=0.8
+# export DEFAULT_MIN_PACKAGE_COV=0.7
+# export DEFAULT_MIN_FILE_COV=0.6
+# export DEFAULT_MIN_BLOCK_COV=0.5
+
+export ROOT=. # Root directory of project.
+export PROFILE=profile # Path to profile.
+export NAME=gobar # Name of project in go.mod
+go run ./cmd
+```
+
+With evaluation API:
+
+```go
+import "gobar/pkg/evaluate"
+
+const (
+    name="gobar"
+    root="/home/user/work/gobar"
+    profile="profile"
+)
+
+func main() {
+    evaluator := evaluate.New(name, root, profile)
+    cov, err := evaluator.EvalCoverage()
+    if err != nil {
+        panic(err)
+    }
+}
+
+```
+
 __Rules__
 
 1. Function directives must be be function documentation, implying that there cannot be whitespace separating the function and comment like this:
@@ -73,7 +115,7 @@ func MyFunc() {...} // This doesn't work!
 
 ```go
 // Some documentation comment.
-//gobar:...
+//gobar:min:0.25
 // Some other documentation comment.
 func MyFunc() {...} // This will work!
 ```
@@ -81,7 +123,7 @@ func MyFunc() {...} // This will work!
 4. There __can__ be whitespace separating the directive and the slashes, like this:
 
 ```go
-//      gobar:... this is okay!
+//      gobar:min:0.25 this is okay!
 func MyFunc() {...}
 ```
 
