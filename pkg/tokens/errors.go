@@ -2,7 +2,7 @@ package tokens
 
 import "fmt"
 
-type ActualFunctionCoverageBeneathMinimum struct {
+type ActualFunctionCoverageBeneathMinimumError struct {
 	minimum     float64
 	actual      float64
 	funcName    string
@@ -10,11 +10,11 @@ type ActualFunctionCoverageBeneathMinimum struct {
 	packageName string
 }
 
-func (err *ActualFunctionCoverageBeneathMinimum) Error() string {
+func (err *ActualFunctionCoverageBeneathMinimumError) Error() string {
 	return ""
 }
 
-type MissingArgument struct {}
+type MissingArgument struct{}
 
 func (err *MissingArgument) Error() string {
 	return "an argument for the command was expected"

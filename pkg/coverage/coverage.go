@@ -9,48 +9,55 @@ type PositionMapper interface {
 }
 
 type Result struct {
-	FileResult  *FileResult
-	FuncResults map[string]*DeclResult
+	Stmts int
+	Covd  int
 }
 
-type FileResult struct {
-	statements        int
-	coveredStatements int
+func (result *Result) Statements() int {
+	return result.Stmts
 }
 
-type DeclResult struct {
-	statements        int
-	coveredStatements int
+func (result *Result) Covered() int {
+	return result.Covd
 }
 
 type Coverage struct {
 	position PositionMapper
-	profile  *cover.Profile
 }
 
-func New(profile *cover.Profile, position PositionMapper) *Coverage {
+func New(position PositionMapper) *Coverage {
 	return &Coverage{
-		profile:  profile,
 		position: position,
 	}
 }
 
-func (coverage *Coverage) Process() *Result {
-	results := &Result{
-		FileResult:  &FileResult{},
-		FuncResults: make(map[string]*DeclResult),
-	}
+func (coverage *Coverage) ProcessCoverage(profile *cover.Profile) map[string]*Result {
+	results := make(map[string]*Result)
 
-	for _, block := range coverage.profile.Blocks {
+	for _, block := range profile.Blocks {
 		decl := coverage.position.DeclByPosition(block.StartLine, block.StartCol)
-		results.FuncResults[decl].statements += block.NumStmt
-		results.FileResult.statements += block.NumStmt
+		result, ok := results[decl]
+		if !ok {
+			result = &Result{}
+			results[decl] = result
+		}
+
+		result.Stmts += block.NumStmt
 
 		if block.Count > 0 {
-			results.FuncResults[decl].coveredStatements += block.NumStmt
-			results.FileResult.coveredStatements += block.NumStmt
+			result.Covd += block.NumStmt
 		}
 	}
 
 	return results
+}
+
+func Aggregate(resultList []*Result) *Result {
+	aggregatedResult := &Result{}
+	for _, result := range resultList {
+		aggregatedResult.Covd += result.Covd
+		aggregatedResult.Stmts += result.Stmts
+	}
+
+	return aggregatedResult
 }

@@ -7,6 +7,7 @@ import (
 	"gobar/pkg/processor"
 	"gobar/pkg/profiles"
 	"gobar/pkg/tokens"
+	"gobar/pkg/unit"
 	"gobar/pkg/visitor"
 	"path/filepath"
 
@@ -16,6 +17,7 @@ import (
 type EvaluatorOptions func(*Evaluator)
 
 type Evaluator struct {
+	name                   string
 	root                   string
 	profile                string
 	defaultMinimum         float64
@@ -41,11 +43,12 @@ func InitDefaultFunctionMinimum(defaultFunctionMinimum float64) EvaluatorOptions
 	}
 }
 
-func New(root, profile string, options ...EvaluatorOptions) *Evaluator {
+func New(name, root, profile string, options ...EvaluatorOptions) *Evaluator {
 	evalutor := &Evaluator{
 		defaultMinimum:         80,
 		defaultFileMinimum:     60,
 		defaultFunctionMinimum: 40,
+		name:                   name,
 		root:                   root,
 		profile:                profile,
 	}
@@ -57,38 +60,101 @@ func New(root, profile string, options ...EvaluatorOptions) *Evaluator {
 	return evalutor
 }
 
-func (evaluator *Evaluator) EvalCoverage() error {
+func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
+
+	// Parse profiles from go cover tool produced coverage report.
 	profs, err := cover.ParseProfiles(evaluator.profile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	profilesByName := profiles.New(profs)
 
-	files := make(map[string]*visitor.File)
-	emplacer := visitor.NewEmplacer(files)
+	// Create file visitor to parse abstract syntax tree from each applicable file.
+	dirs := make(map[string]map[string]*visitor.File)
+	emplacer := visitor.NewEmplacer(dirs)
 	visitor := visitor.NewVisitor(emplacer)
 
+	// Walk over each file in the project.
 	err = filepath.WalkDir(evaluator.root, visitor.Visit)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	project := unit.NewProject("")
+
+	// Create new directive parser, which will check each project file for gobar coverage directives.
 	psr := parser.New(tokens.CreatorsByCommand)
-	commentProcessor := parser.NewCommentParser(psr)
 
-	for name, file := range files {
-		profile := profilesByName.Get(name)
-		
-		decls := processor.New(file.Fst, file.Ast).Process()
+	for dir, files := range dirs {
 
-		sortedDeclarations := declarations.New(declarations.Sort(decls))
+		pack := unit.NewPackage(dir)
+		project.WithChild(pack)
 
-		coverageCalculator := coverage.New(profile, sortedDeclarations)
-		results := coverageCalculator.Process()
+		var packageComments []string
+		for _, file := range files {
+			if file.Ast.Doc != nil {
+				for _, comment := range file.Ast.Doc.List {
+					packageComments = append(packageComments, comment.Text)
+				}
+			}
+		}
 
+		packDirectives, err := psr.ParseComments(packageComments)
+		if err != nil {
+			return nil, err
+		}
 
+		pack.WithDirectives(packDirectives...)
+
+		for name, file := range files {
+
+			// Continue if no profile is found.
+			profile := profilesByName.Get(filepath.Join(evaluator.name, dir, name))
+			if profile == nil {
+				continue
+			}
+
+			fl := unit.NewFile(name)
+			pack.WithChild(fl)
+
+			var fileComments []string
+			if file.Ast.Doc != nil {
+				for _, comment := range file.Ast.Doc.List {
+					fileComments = append(fileComments, comment.Text)
+				}
+			}
+
+			fileDirectives, err := psr.ParseComments(fileComments, packDirectives...)
+			if err != nil {
+				return nil, err
+			}
+
+			fl.WithDirectives(fileDirectives...)
+
+			decls := processor.New(file.Fst, file.Ast, dir, name).Process()
+
+			// Sort all declarations.
+			sortedDeclarations := declarations.New(declarations.Sort(decls))
+
+			coverageCalculator := coverage.New(sortedDeclarations)
+
+			results := coverageCalculator.ProcessCoverage(profile)
+
+			for _, decl := range decls {
+				cov := results[decl.Name]
+				block := unit.NewBlock(decl.Name, cov)
+				fl.WithChild(block)
+
+				blockDirectives, err := psr.ParseComments(decl.Comments, fileDirectives...)
+				if err != nil {
+					return nil, err
+				}
+
+				block.WithDirectives(blockDirectives...)
+			}
+		}
 	}
 
-	return nil
+	return project.Evaluate()
 }

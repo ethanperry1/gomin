@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"gobar/pkg/declarations"
 	"gobar/pkg/tokens"
 	"regexp"
 	"strings"
@@ -56,18 +55,4 @@ func (parser *Parser) ParseComments(comments []string, parents ...tokens.Compare
 	}
 
 	return comparers, nil
-}
-
-func (parser *Parser) ParseFile(fileComments []string, decls []*declarations.Decl) ([]tokens.Comparer, error){
-	fileComparers, err := parser.ParseComments(fileComments)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, decl := range decls {
-		fileComparers, err := parser.ParseComments(fileComments)
-		if err != nil {
-			return nil, err
-		}
-	}
 }

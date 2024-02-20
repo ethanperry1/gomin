@@ -16,22 +16,28 @@ type (
 )
 
 type FileProcessor struct {
-	fst      *token.FileSet
-	tree     *ast.File
+	fst       *token.FileSet
+	tree      *ast.File
+	directory string
+	fileName  string
 }
 
 func New(
 	fst *token.FileSet,
 	tree *ast.File,
+	directory string,
+	fileName string,
 ) *FileProcessor {
 	return &FileProcessor{
-		fst:      fst,
-		tree:     tree,
+		fst:       fst,
+		tree:      tree,
+		directory: directory,
+		fileName:  fileName,
 	}
 }
 
-
 func (processor *FileProcessor) processFuncTypeSpec(spec *ast.ValueSpec) []*declarations.Decl {
+
 	decls := make([]*declarations.Decl, len(spec.Names))
 	for idx, name := range spec.Names {
 		decls[idx].Name = name.Name
@@ -43,13 +49,15 @@ func (processor *FileProcessor) processFuncTypeSpec(spec *ast.ValueSpec) []*decl
 		decls[idx].Column = pos.Column
 	}
 
-	comments := make([]string, len(spec.Doc.List))
-	for idx, comment := range spec.Doc.List {
-		comments[idx] = comment.Text
-	}
+	if spec.Doc != nil {
+		comments := make([]string, len(spec.Doc.List))
+		for idx, comment := range spec.Doc.List {
+			comments[idx] = comment.Text
+		}
 
-	for _, decl := range decls {
-		decl.Comments = comments
+		for _, decl := range decls {
+			decl.Comments = comments
+		}
 	}
 
 	return decls
@@ -60,7 +68,7 @@ func (processor *FileProcessor) processValueSpec(spec *ast.ValueSpec) []*declara
 	case *ast.FuncType:
 		return processor.processFuncTypeSpec(spec)
 	default:
-		return nil
+		return []*declarations.Decl{}
 	}
 }
 
@@ -76,19 +84,24 @@ func (processor *FileProcessor) processGenDecl(genDecl *ast.GenDecl) []*declarat
 	return decls
 }
 
-func (processor *FileProcessor) processFuncDecl(funcDecl *ast.FuncDecl) *declarations.Decl {
-	comments := make([]string, len(funcDecl.Doc.List))
-	for idx, comment := range funcDecl.Doc.List {
-		comments[idx] = comment.Text
-	}
+func (processor *FileProcessor) processFuncDecl(funcDecl *ast.FuncDecl) []*declarations.Decl {
+	pos := processor.fst.Position(funcDecl.Body.Pos())
 
-	pos := processor.fst.Position(funcDecl.Pos())
-	
-	return &declarations.Decl{
+	decl := &declarations.Decl{
 		Line:   pos.Line,
 		Column: pos.Column,
 		Name:   funcDecl.Name.Name,
 	}
+
+	if funcDecl.Doc != nil {
+		comments := make([]string, len(funcDecl.Doc.List))
+		for idx, comment := range funcDecl.Doc.List {
+			comments[idx] = comment.Text
+		}
+		decl.Comments = comments
+	}
+
+	return []*declarations.Decl{decl}
 }
 
 func (processor *FileProcessor) Process() []*declarations.Decl {
@@ -98,8 +111,15 @@ func (processor *FileProcessor) Process() []*declarations.Decl {
 		case *ast.GenDecl:
 			decls = append(decls, processor.processGenDecl(d)...)
 		case *ast.FuncDecl:
-			decls = append(decls, processor.processFuncDecl(d))
+			decls = append(decls, processor.processFuncDecl(d)...)
 		}
 	}
+
+	// Append filename and directory to all declarations.
+	for _, decl := range decls {
+		decl.FileName = processor.fileName
+		decl.Directory = processor.directory
+	}
+
 	return decls
 }

@@ -17,7 +17,7 @@ type (
 		ParseComment(comment string) (tokens.Comparer, error)
 	}
 	Emplacer interface {
-		Emplace(fileName string, file *File)
+		Emplace(directory string, fileName string, file *File)
 	}
 	Processor interface {
 		Process(comments []*ast.Comment) ([]tokens.Comparer, error)
@@ -25,24 +25,28 @@ type (
 )
 
 type File struct {
-	Ast *ast.File
-	Fst *token.FileSet
+	Ast       *ast.File
+	Fst       *token.FileSet
 }
 
 type FileEmplacer struct {
-	files     map[string][]tokens.Comparer
-	funcs     map[token.Position][]tokens.Comparer
-	asts 	  map[string]*File
+	asts map[string]map[string]*File
 }
 
-func NewEmplacer(asts map[string]*File) *FileEmplacer {
+func NewEmplacer(asts map[string]map[string]*File) *FileEmplacer {
 	return &FileEmplacer{
 		asts: asts,
 	}
 }
 
-func (emplacer *FileEmplacer) Emplace(fileName string, file *File) {
-	emplacer.asts[fileName] = file
+func (emplacer *FileEmplacer) Emplace(directory string, fileName string, file *File) {
+	dir, ok := emplacer.asts[directory]
+	if !ok {
+		dir = make(map[string]*File)
+		emplacer.asts[directory] = dir
+	}
+
+	dir[fileName] = file
 }
 
 type Visitor struct {
@@ -63,6 +67,12 @@ func NewVisitor(emplacer Emplacer, options ...func(*Visitor)) *Visitor {
 }
 
 func (visitor *Visitor) Visit(path string, d fs.DirEntry, err error) error {
+
+	// Ignore individual files.
+	if !d.IsDir() {
+		return nil
+	}
+
 	if err != nil {
 		return err
 	}
@@ -85,17 +95,21 @@ func (visitor *Visitor) Visit(path string, d fs.DirEntry, err error) error {
 	}
 
 	for _, name := range names {
+		// Ignore test files.
+		if strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+
 		if strings.HasSuffix(name, ".go") {
-			joined := filepath.Join(path, name)
 			fst := token.NewFileSet()
-			tree, err := parser.ParseFile(fst, joined, nil, parser.ParseComments)
+			tree, err := parser.ParseFile(fst, filepath.Join(path, name), nil, parser.ParseComments)
 			if err != nil {
 				return err
 			}
 
-			visitor.emplacer.Emplace(joined, &File{
-				Ast: tree,
-				Fst: fst,
+			visitor.emplacer.Emplace(path, name, &File{
+				Ast:       tree,
+				Fst:       fst,
 			})
 		}
 	}

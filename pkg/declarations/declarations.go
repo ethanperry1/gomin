@@ -5,10 +5,12 @@ import (
 )
 
 type Decl struct {
-	Line     int
-	Column   int
-	Name     string
-	Comments []string
+	Line      int
+	Column    int
+	Name      string
+	Comments  []string
+	FileName  string
+	Directory string
 }
 
 type Declarations struct {
@@ -22,19 +24,23 @@ func New(sortedDecls []*Decl) *Declarations {
 }
 
 func (declarations *Declarations) DeclByPosition(startLine, startCol int) string {
-	return declarations.sortedDecls[declarations.search(declarations.sortedDecls, &Decl{
+	pos := declarations.search(declarations.sortedDecls, &Decl{
 		Line:   startLine,
 		Column: startCol,
-	})].Name
+	})
+	if pos != 0 {
+		pos -= 1
+	}
+	return declarations.sortedDecls[pos].Name
 }
 
 func (declarations *Declarations) search(d1 []*Decl, d2 *Decl) int {
 	return sort.Search(len(d1), func(i int) bool {
 		if d1[i].Line == d2.Line {
-			return d1[i].Column <= d2.Column
+			return d1[i].Column >= d2.Column
 		}
 
-		return d1[i].Line < d2.Line
+		return d1[i].Line > d2.Line
 	})
 }
 

@@ -19,8 +19,13 @@ var (
 	}
 )
 
+type Coverage interface {
+	Covered() int
+	Statements() int
+}
+
 type Comparer interface {
-	Compare(float64) error
+	Compare(Coverage) (Coverage, error)
 	Type() Command
 }
 
@@ -60,9 +65,10 @@ func NewMinimum(minimum float64) *MinimumCommand {
 	}
 }
 
-func (minimum *MinimumCommand) Compare(actual float64) error {
+func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
+	actual := float64(cov.Covered()) / float64(cov.Statements())
 	if actual < minimum.minimum {
-		return &ActualFunctionCoverageBeneathMinimum{
+		return nil, &ActualFunctionCoverageBeneathMinimumError{
 			minimum:     minimum.minimum,
 			actual:      actual,
 			funcName:    minimum.funcName,
@@ -71,7 +77,7 @@ func (minimum *MinimumCommand) Compare(actual float64) error {
 		}
 	}
 
-	return nil
+	return cov, nil
 }
 
 func (minimum *MinimumCommand) Type() Command {
