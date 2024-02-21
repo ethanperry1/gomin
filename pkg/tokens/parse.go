@@ -28,15 +28,15 @@ func Parse(pkg bool, level Level, components ...string) (LeveledComparer, error)
 		return nil, &MissingArgument{}
 	}
 
-	if !pkg && Command(components[1]) == Pkg {
+	if !pkg && Command(components[0]) == Pkg {
 		return nil, nil
 	}
 
-	switch Command(components[1]) {
+	switch Command(components[0]) {
 	case Pkg:
 		return Parse(false, level, components[1:]...)
 	case Default:
-		switch l := Level(components[2]); l {
+		switch l := Level(components[1]); l {
 		case File:
 			return Parse(false, File, components[2:]...)
 		case Block:

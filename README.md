@@ -24,7 +24,7 @@ __Types__
 1. _min_ | verifies that the block, file, or package has a minimum number of covered statements.
 2. _exclude_ | excludes a block, file, or package from overall unit test coverage calculations.
 3. _pkg_ | denotes that the directive should affect the package level.
-4. _default_ | 
+4. _default_ | can be used to set default behaviors for calculating coverage on files or blocks.
 
 __Formatting__
 
@@ -156,3 +156,52 @@ func MyFunc() {...}
 //gobar:exclude
 var funcOne, funcTwo = func() {}, func() {} // Both will have the same exclusion directive.
 ```
+
+## Examples
+
+### Multiple directives on one file.
+
+```go
+//gobar:pkg:min:0.55
+//gobar:pkg:default:file:min:0.5
+//gobar:min:0.65
+//gobar:default:block:min:0.35
+//gobar:pkg:default:block:min:0.30
+//gobar:pkg:exclude
+package mypack
+```
+
+In this case, the following conditions would be true:
+1. The package is expected to have at least 40% unit test coverage.
+2. All files in the package must have at least 50% unit test coverage.
+3. This particular file must have at least 65% unit test coverage.
+4. All function blocks in this file must have at least 35% unit test coverage.
+5. All function blocks in the whole package must have at least 30% unit test coverage.
+6. The package itself will be excluded from the overall unit test coverage calculation.
+
+### Multiple directives on var declaration with special var declarations.
+
+```go
+//gobar:min:0.5
+var (
+    //gobar:min:0.4
+    var f1, f2 = func(){...}, func(){...}
+    //gobar:min:0.3
+    var f3 = func() {...}
+    var f4 = func() {...}
+)
+```
+
+The following statements would be true in this circumstance:
+1. Function f1 and function f2 are expected to have 40% unit test coverage.
+2. Function f3 is expected to have 30% unit test coverage.
+3. Function f4 is expected to have 50% unit test coverage.
+
+### File default declaration on one function.
+
+```go
+// gobar:default:file:min:0.5
+func MyFunc() {...}
+```
+
+This will not impact the coverage bar in any way, because the child function block directive cannot impact its parent file.

@@ -119,7 +119,9 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 					err:  err,
 				}
 			}
-			pkgCmps[cmp.Level()] = append(pkgCmps[cmp.Level()], cmp)
+			if cmp != nil {
+				pkgCmps[cmp.Level()] = append(pkgCmps[cmp.Level()], cmp)
+			}
 		}
 
 		pack.WithDirectives(append(projectCmps[tokens.Package], pkgCmps[tokens.Package]...)...)
@@ -155,7 +157,10 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 						dir:  dir,
 					}
 				}
-				fileCmps[cmp.Level()] = append(fileCmps[cmp.Level()], cmp)
+
+				if cmp != nil {
+					fileCmps[cmp.Level()] = append(fileCmps[cmp.Level()], cmp)
+				}
 			}
 
 			fl.WithDirectives(append(projectCmps[tokens.File], append(pkgCmps[tokens.File], fileCmps[tokens.File]...)...)...)
@@ -194,7 +199,10 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 							block: decl.Name,
 						}
 					}
-					declCmps[cmp.Level()] = append(declCmps[cmp.Level()], cmp)
+
+					if cmp != nil {
+						declCmps[cmp.Level()] = append(declCmps[cmp.Level()], cmp)
+					}
 				}
 
 				block.WithDirectives(append(projectCmps[tokens.Block], append(pkgCmps[tokens.Block], append(fileCmps[tokens.Block], declCmps[tokens.Block]...)...)...)...)

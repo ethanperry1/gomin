@@ -32,7 +32,7 @@ const (
 	Min     Command = "min"
 	Pkg     Command = "pkg"
 	Exclude Command = "exclude"
-	Default Command = "command"
+	Default Command = "default"
 )
 
 var (
