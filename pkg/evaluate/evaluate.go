@@ -16,17 +16,17 @@ import (
 type EvaluatorOptions func(*Evaluator)
 
 type Evaluator struct {
-	name                   string
-	root                   string
-	profile                string
-	defaultMinimum         float64
-	defaultFileMinimum     float64
-	defaultFunctionMinimum float64
+	name                  string
+	root                  string
+	profile               string
+	defaultPackageMinimum float64
+	defaultFileMinimum    float64
+	defaultBlockMinimum   float64
 }
 
-func InitDefaultMinimum(defaultMinimum float64) EvaluatorOptions {
+func InitDefaultPackageMinimum(defaultMinimum float64) EvaluatorOptions {
 	return func(e *Evaluator) {
-		e.defaultMinimum = defaultMinimum
+		e.defaultPackageMinimum = defaultMinimum
 	}
 }
 
@@ -38,18 +38,18 @@ func InitDefaultFileMinimum(defaultFileMinimum float64) EvaluatorOptions {
 
 func InitDefaultFunctionMinimum(defaultFunctionMinimum float64) EvaluatorOptions {
 	return func(e *Evaluator) {
-		e.defaultFunctionMinimum = defaultFunctionMinimum
+		e.defaultBlockMinimum = defaultFunctionMinimum
 	}
 }
 
 func New(name, root, profile string, options ...EvaluatorOptions) *Evaluator {
 	evalutor := &Evaluator{
-		defaultMinimum:         80,
-		defaultFileMinimum:     60,
-		defaultFunctionMinimum: 40,
-		name:                   name,
-		root:                   root,
-		profile:                profile,
+		defaultPackageMinimum: 0,
+		defaultFileMinimum:    0,
+		defaultBlockMinimum:   0,
+		name:                  name,
+		root:                  root,
+		profile:               profile,
 	}
 
 	for _, option := range options {
@@ -81,9 +81,20 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 	project := unit.NewProject("")
 
-	pkgCmps := make(map[tokens.Level][]tokens.Comparer)
+	projectCmps := make(map[tokens.Level][]tokens.LeveledComparer)
+	projectCmps[tokens.Package] = append(projectCmps[tokens.Package], &tokens.ComparerWithLevel{
+		Comparer: tokens.NewMinimum(evaluator.defaultPackageMinimum),
+	})
+	projectCmps[tokens.File] = append(projectCmps[tokens.File], &tokens.ComparerWithLevel{
+		Comparer: tokens.NewMinimum(evaluator.defaultFileMinimum),
+	})
+	projectCmps[tokens.Block] = append(projectCmps[tokens.Block], &tokens.ComparerWithLevel{
+		Comparer: tokens.NewMinimum(evaluator.defaultBlockMinimum),
+	})
 
 	for dir, files := range dirs {
+
+		pkgCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
 		pack := unit.NewPackage(dir)
 		project.WithChild(pack)
@@ -111,11 +122,11 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 			pkgCmps[cmp.Level()] = append(pkgCmps[cmp.Level()], cmp)
 		}
 
-		pack.WithDirectives(pkgCmps[tokens.Package]...)
+		pack.WithDirectives(append(projectCmps[tokens.Package], pkgCmps[tokens.Package]...)...)
 
 		for name, file := range files {
 
-			fileCmps := make(map[tokens.Level][]tokens.Comparer)
+			fileCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
 			profile := profilesByName.Get(filepath.Join(evaluator.name, dir, name))
 			if profile == nil {
@@ -147,7 +158,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 				fileCmps[cmp.Level()] = append(fileCmps[cmp.Level()], cmp)
 			}
 
-			fl.WithDirectives(append(pkgCmps[tokens.File], fileCmps[tokens.File]...)...)
+			fl.WithDirectives(append(projectCmps[tokens.File], append(pkgCmps[tokens.File], fileCmps[tokens.File]...)...)...)
 
 			decls := processor.New(file.Fst, file.Ast, dir, name).Process()
 
@@ -159,7 +170,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 			for _, decl := range decls {
 
-				declCmps := make(map[tokens.Level][]tokens.Comparer)
+				declCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
 				cov := results[decl.Name]
 				block := unit.NewBlock(decl.Name, cov)
@@ -174,7 +185,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 				}
 
 				for _, tks := range declTokens {
-					cmp, err := tokens.Parse(false, tokens.File, tks...)
+					cmp, err := tokens.Parse(false, tokens.Block, tks...)
 					if err != nil {
 						return nil, &InvalidBlockDirectiveError{
 							err:   err,
@@ -186,7 +197,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 					declCmps[cmp.Level()] = append(declCmps[cmp.Level()], cmp)
 				}
 
-				block.WithDirectives(append(pkgCmps[tokens.File], append(fileCmps[tokens.File], declCmps[tokens.File]...)...)...)
+				block.WithDirectives(append(projectCmps[tokens.Block], append(pkgCmps[tokens.Block], append(fileCmps[tokens.Block], declCmps[tokens.Block]...)...)...)...)
 			}
 		}
 	}

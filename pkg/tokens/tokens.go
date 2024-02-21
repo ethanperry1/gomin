@@ -6,6 +6,20 @@ type (
 	Level   string
 	Command string
 	Creator func(components ...string) (Comparer, error)
+
+	Coverage interface {
+		Covered() int
+		Statements() int
+	}
+	LeveledComparer interface {
+		Comparer
+		Level() Level
+	}
+	Comparer interface {
+		Compare(Coverage) (Coverage, error)
+		Type() Command
+		Directive() []string
+	}
 )
 
 const (
@@ -28,16 +42,13 @@ var (
 	}
 )
 
-type Coverage interface {
-	Covered() int
-	Statements() int
+type ComparerWithLevel struct {
+	Comparer
+	level Level
 }
 
-type Comparer interface {
-	Compare(Coverage) (Coverage, error)
-	Type() Command
-	Level() Level
-	Directive() []string
+func (comparer *ComparerWithLevel) Level() Level {
+	return comparer.level
 }
 
 func CreateMinimumFromCommand(components ...string) (Comparer, error) {
@@ -67,12 +78,14 @@ func CreateMinimumFromCommand(components ...string) (Comparer, error) {
 type MinimumCommand struct {
 	minimum   float64
 	directive []string
-	level     Level
 }
 
-func (minimum *MinimumCommand) Level() Level {
-	return minimum.level
+func NewMinimum(minimum float64) *MinimumCommand {
+	return &MinimumCommand{
+		minimum: minimum,
+	}
 }
+
 
 func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
 	actual := float64(cov.Covered()) / float64(cov.Statements())
@@ -94,36 +107,14 @@ func (minimum *MinimumCommand) Directive() []string {
 	return minimum.directive
 }
 
-func CreatePackageCommandFromCommand(components ...string) (Comparer, error) {
-	if len(components) < 2 {
-		return nil, &MissingArgument{}
-	}
-
-	switch components[1] {
-	case "min":
-		return CreateMinimumFromCommand(components[1:]...)
-	case "exclude":
-		return CreateExcludeFromCommand(components[1:]...)
-	default:
-		return nil, &InvalidPackageCommandError{
-			command: components[1],
-		}
-	}
-}
-
 func CreateExcludeFromCommand(components ...string) (Comparer, error) {
 	return &ExcludeCommand{
 		directive: components,
 	}, nil
 }
 
-func (command *ExcludeCommand) Level() Level {
-	return command.level
-}
-
 type ExcludeCommand struct {
 	directive []string
-	level     Level
 }
 
 func (command *ExcludeCommand) Compare(cov Coverage) (Coverage, error) {

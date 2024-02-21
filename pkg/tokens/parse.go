@@ -23,7 +23,7 @@ func Tokenize(comment string) ([]string, bool) {
 	return components, true
 }
 
-func Parse(pkg bool, level Level, components ...string) (Comparer, error) {
+func Parse(pkg bool, level Level, components ...string) (LeveledComparer, error) {
 	if len(components) < 1 {
 		return nil, &MissingArgument{}
 	}
@@ -57,5 +57,13 @@ func Parse(pkg bool, level Level, components ...string) (Comparer, error) {
 		}
 	}
 
-	return dir(components...)
+	cmp, err := dir(components...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ComparerWithLevel{
+		Comparer: cmp,
+		level:    level,
+	}, nil
 }

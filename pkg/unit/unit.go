@@ -81,7 +81,7 @@ func (project *Project) Evaluate() (Coverage, error) {
 type Package struct {
 	name       string
 	children   []Unit
-	directives []tokens.Comparer
+	directives []tokens.LeveledComparer
 }
 
 func NewPackage(name string) *Package {
@@ -102,7 +102,7 @@ func (pack *Package) WithChild(unit Unit) {
 	pack.children = append(pack.children, unit)
 }
 
-func (pack *Package) WithDirectives(directive ...tokens.Comparer) {
+func (pack *Package) WithDirectives(directive ...tokens.LeveledComparer) {
 	pack.directives = append(pack.directives, directive...)
 }
 
@@ -140,7 +140,7 @@ func (pack *Package) Evaluate() (Coverage, error) {
 type File struct {
 	name       string
 	children   []Unit
-	directives []tokens.Comparer
+	directives []tokens.LeveledComparer
 }
 
 func NewFile(name string) *File {
@@ -161,7 +161,7 @@ func (file *File) WithChild(unit Unit) {
 	file.children = append(file.children, unit)
 }
 
-func (file *File) WithDirectives(directive ...tokens.Comparer) {
+func (file *File) WithDirectives(directive ...tokens.LeveledComparer) {
 	file.directives = append(file.directives, directive...)
 }
 
@@ -198,7 +198,7 @@ func (file *File) Evaluate() (Coverage, error) {
 
 type Block struct {
 	name       string
-	directives []tokens.Comparer
+	directives []tokens.LeveledComparer
 	coverage   Coverage
 }
 
@@ -214,7 +214,7 @@ func (block *Block) Name() string {
 	return block.name
 }
 
-func (block *Block) WithDirectives(directive ...tokens.Comparer) {
+func (block *Block) WithDirectives(directive ...tokens.LeveledComparer) {
 	block.directives = append(block.directives, directive...)
 }
 

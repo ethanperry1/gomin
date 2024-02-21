@@ -28,6 +28,7 @@ func (declarations *Declarations) DeclByPosition(startLine, startCol int) string
 		Line:   startLine,
 		Column: startCol,
 	}) - 1
+
 	return declarations.sortedDecls[pos].Name
 }
 
