@@ -1,4 +1,4 @@
-# 🏋️‍♀️ Gobar 🏋️
+# 🏋️‍♀️ GObar 🏋️
 
 Raise the bar for your code quality and unit test coverage.
 
