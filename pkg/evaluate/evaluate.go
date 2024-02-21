@@ -3,7 +3,6 @@ package evaluate
 import (
 	"gobar/pkg/coverage"
 	"gobar/pkg/declarations"
-	"gobar/pkg/parser"
 	"gobar/pkg/processor"
 	"gobar/pkg/profiles"
 	"gobar/pkg/tokens"
@@ -61,7 +60,6 @@ func New(name, root, profile string, options ...EvaluatorOptions) *Evaluator {
 }
 
 func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
-
 	// Parse profiles from go cover tool produced coverage report.
 	profs, err := cover.ParseProfiles(evaluator.profile)
 	if err != nil {
@@ -83,36 +81,42 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 	project := unit.NewProject("")
 
-	// Create new directive parser, which will check each project file for gobar coverage directives.
-	psr := parser.New(tokens.CreatorsByCommand)
+	pkgCmps := make(map[tokens.Level][]tokens.Comparer)
 
 	for dir, files := range dirs {
 
 		pack := unit.NewPackage(dir)
 		project.WithChild(pack)
 
-		var packageComments []string
+		var packageTokens [][]string
 		for _, file := range files {
 			if file.Ast.Doc != nil {
 				for _, comment := range file.Ast.Doc.List {
-					packageComments = append(packageComments, comment.Text)
+					tks, ok := tokens.Tokenize(comment.Text)
+					if ok {
+						packageTokens = append(packageTokens, tks)
+					}
 				}
 			}
 		}
 
-		packDirectives, err := psr.ParsePkgComments(packageComments)
-		if err != nil {
-			return nil, &InvalidPackageDirectiveError{
-				name: dir,
-				err:  err,
+		for _, tks := range packageTokens {
+			cmp, err := tokens.Parse(true, tokens.Package, tks...)
+			if err != nil {
+				return nil, &InvalidPackageDirectiveError{
+					name: dir,
+					err:  err,
+				}
 			}
+			pkgCmps[cmp.Level()] = append(pkgCmps[cmp.Level()], cmp)
 		}
 
-		pack.WithDirectives(packDirectives...)
+		pack.WithDirectives(pkgCmps[tokens.Package]...)
 
 		for name, file := range files {
 
-			// Continue if no profile is found.
+			fileCmps := make(map[tokens.Level][]tokens.Comparer)
+
 			profile := profilesByName.Get(filepath.Join(evaluator.name, dir, name))
 			if profile == nil {
 				continue
@@ -121,27 +125,32 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 			fl := unit.NewFile(name)
 			pack.WithChild(fl)
 
-			var fileComments []string
+			var fileTokens [][]string
 			if file.Ast.Doc != nil {
 				for _, comment := range file.Ast.Doc.List {
-					fileComments = append(fileComments, comment.Text)
+					tks, ok := tokens.Tokenize(comment.Text)
+					if ok {
+						fileTokens = append(fileTokens, tks)
+					}
 				}
 			}
 
-			fileDirectives, err := psr.ParseComments(fileComments, packDirectives...)
-			if err != nil {
-				return nil, &InvalidFileDirectiveError{
-					err:  err,
-					name: name,
-					dir:  dir,
+			for _, tks := range fileTokens {
+				cmp, err := tokens.Parse(false, tokens.File, tks...)
+				if err != nil {
+					return nil, &InvalidFileDirectiveError{
+						err:  err,
+						name: name,
+						dir:  dir,
+					}
 				}
+				fileCmps[cmp.Level()] = append(fileCmps[cmp.Level()], cmp)
 			}
 
-			fl.WithDirectives(fileDirectives...)
+			fl.WithDirectives(append(pkgCmps[tokens.File], fileCmps[tokens.File]...)...)
 
 			decls := processor.New(file.Fst, file.Ast, dir, name).Process()
 
-			// Sort all declarations.
 			sortedDeclarations := declarations.New(declarations.Sort(decls))
 
 			coverageCalculator := coverage.New(sortedDeclarations)
@@ -149,21 +158,35 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 			results := coverageCalculator.ProcessCoverage(profile)
 
 			for _, decl := range decls {
+
+				declCmps := make(map[tokens.Level][]tokens.Comparer)
+
 				cov := results[decl.Name]
 				block := unit.NewBlock(decl.Name, cov)
 				fl.WithChild(block)
 
-				blockDirectives, err := psr.ParseComments(decl.Comments, fileDirectives...)
-				if err != nil {
-					return nil, &InvalidBlockDirectiveError{
-						err:   err,
-						dir:   dir,
-						name:  name,
-						block: decl.Name,
+				var declTokens [][]string
+				for _, comment := range decl.Comments {
+					tks, ok := tokens.Tokenize(comment)
+					if ok {
+						declTokens = append(declTokens, tks)
 					}
 				}
 
-				block.WithDirectives(blockDirectives...)
+				for _, tks := range declTokens {
+					cmp, err := tokens.Parse(false, tokens.File, tks...)
+					if err != nil {
+						return nil, &InvalidBlockDirectiveError{
+							err:   err,
+							dir:   dir,
+							name:  name,
+							block: decl.Name,
+						}
+					}
+					declCmps[cmp.Level()] = append(declCmps[cmp.Level()], cmp)
+				}
+
+				block.WithDirectives(append(pkgCmps[tokens.File], append(fileCmps[tokens.File], declCmps[tokens.File]...)...)...)
 			}
 		}
 	}

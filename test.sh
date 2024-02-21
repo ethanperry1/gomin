@@ -1,2 +1,2 @@
 go test ./... -coverprofile=profile
-ROOT=. PROFILE=profile go run ./cmd
+ROOT=. PROFILE=profile NAME=gobar go run .

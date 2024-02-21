@@ -26,9 +26,26 @@ func (err *InvalidMinimumArgument) Error() string {
 }
 
 type InvalidPackageCommandError struct {
-	command   string
+	command string
 }
 
 func (err *InvalidPackageCommandError) Error() string {
 	return fmt.Sprintf("the command %q is invalid or cannot be used as a package directive", err.command)
+}
+
+type UnknownCommandError struct {
+	command    string
+	components []string
+}
+
+func (err *UnknownCommandError) Error() string {
+	return fmt.Sprintf("the command %q is unknown (part of directive %v)", err.command, err.components)
+}
+
+type InvalidDefaultCommandError struct {
+	argument Level
+}
+
+func (err *InvalidDefaultCommandError) Error() string {
+	return fmt.Sprintf("the argument %q is not valid for the default command", err.argument)
 }

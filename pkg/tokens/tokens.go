@@ -3,20 +3,27 @@ package tokens
 import "strconv"
 
 type (
+	Level   string
 	Command string
 	Creator func(components ...string) (Comparer, error)
+)
+
+const (
+	Package Level = "package"
+	File    Level = "file"
+	Block   Level = "block"
 )
 
 const (
 	Min     Command = "min"
 	Pkg     Command = "pkg"
 	Exclude Command = "exclude"
+	Default Command = "command"
 )
 
 var (
 	CreatorsByCommand = map[Command]Creator{
 		Min:     CreateMinimumFromCommand,
-		Pkg:     CreatePackageCommandFromCommand,
 		Exclude: CreateExcludeFromCommand,
 	}
 )
@@ -29,6 +36,7 @@ type Coverage interface {
 type Comparer interface {
 	Compare(Coverage) (Coverage, error)
 	Type() Command
+	Level() Level
 	Directive() []string
 }
 
@@ -59,6 +67,11 @@ func CreateMinimumFromCommand(components ...string) (Comparer, error) {
 type MinimumCommand struct {
 	minimum   float64
 	directive []string
+	level     Level
+}
+
+func (minimum *MinimumCommand) Level() Level {
+	return minimum.level
 }
 
 func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
@@ -104,21 +117,25 @@ func CreateExcludeFromCommand(components ...string) (Comparer, error) {
 	}, nil
 }
 
-type ExcludeCommand struct {
-	directive []string
+func (command *ExcludeCommand) Level() Level {
+	return command.level
 }
 
+type ExcludeCommand struct {
+	directive []string
+	level     Level
+}
 
-func (minimum *ExcludeCommand) Compare(cov Coverage) (Coverage, error) {
+func (command *ExcludeCommand) Compare(cov Coverage) (Coverage, error) {
 	return &ExcludeResult{}, nil
 }
 
-func (minimum *ExcludeCommand) Type() Command {
+func (command *ExcludeCommand) Type() Command {
 	return Exclude
 }
 
-func (minimum *ExcludeCommand) Directive() []string {
-	return minimum.directive
+func (command *ExcludeCommand) Directive() []string {
+	return command.directive
 }
 
 type ExcludeResult struct{}

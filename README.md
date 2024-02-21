@@ -24,6 +24,7 @@ __Types__
 1. _min_ | verifies that the block, file, or package has a minimum number of covered statements.
 2. _exclude_ | excludes a block, file, or package from overall unit test coverage calculations.
 3. _pkg_ | denotes that the directive should affect the package level.
+4. _default_ | 
 
 __Formatting__
 

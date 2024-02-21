@@ -6,7 +6,6 @@ type ProfilesByName struct {
 	profiles map[string]*cover.Profile
 }
 
-//gobar:min:0.2
 func New(profiles []*cover.Profile) *ProfilesByName {
 	profilesByName := &ProfilesByName{
 		profiles: make(map[string]*cover.Profile),

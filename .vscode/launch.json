@@ -9,10 +9,11 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd",
+            "program": "${workspaceFolder}",
             "env": {
                 "ROOT": ".",
-                "PROFILE": "./profile",
+                "PROFILE": "profile",
+                "NAME": "gobar"
             }
         }
 
