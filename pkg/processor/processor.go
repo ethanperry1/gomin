@@ -5,8 +5,8 @@ package processor
 import (
 	"go/ast"
 	"go/token"
-	"gobar/pkg/declarations"
-	"gobar/pkg/tokens"
+	"github.com/ethanperry1/gobar/pkg/declarations"
+	"github.com/ethanperry1/gobar/pkg/tokens"
 )
 
 type (

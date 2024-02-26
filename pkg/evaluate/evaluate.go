@@ -1,13 +1,13 @@
 package evaluate
 
 import (
-	"gobar/pkg/coverage"
-	"gobar/pkg/declarations"
-	"gobar/pkg/processor"
-	"gobar/pkg/profiles"
-	"gobar/pkg/tokens"
-	"gobar/pkg/unit"
-	"gobar/pkg/visitor"
+	"github.com/ethanperry1/gobar/pkg/coverage"
+	"github.com/ethanperry1/gobar/pkg/declarations"
+	"github.com/ethanperry1/gobar/pkg/processor"
+	"github.com/ethanperry1/gobar/pkg/profiles"
+	"github.com/ethanperry1/gobar/pkg/tokens"
+	"github.com/ethanperry1/gobar/pkg/unit"
+	"github.com/ethanperry1/gobar/pkg/visitor"
 	"path/filepath"
 
 	"golang.org/x/tools/cover"

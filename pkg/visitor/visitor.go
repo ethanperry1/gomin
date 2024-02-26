@@ -4,11 +4,12 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"gobar/pkg/tokens"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/ethanperry1/gobar/pkg/tokens"
 )
 
 type (
@@ -24,8 +25,8 @@ type (
 )
 
 type File struct {
-	Ast       *ast.File
-	Fst       *token.FileSet
+	Ast *ast.File
+	Fst *token.FileSet
 }
 
 type FileEmplacer struct {
@@ -107,8 +108,8 @@ func (visitor *Visitor) Visit(path string, d fs.DirEntry, err error) error {
 			}
 
 			visitor.emplacer.Emplace(path, name, &File{
-				Ast:       tree,
-				Fst:       fst,
+				Ast: tree,
+				Fst: fst,
 			})
 		}
 	}

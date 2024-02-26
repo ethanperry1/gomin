@@ -1,7 +1,7 @@
 package unit
 
 import (
-	"gobar/pkg/tokens"
+	"github.com/ethanperry1/gobar/pkg/tokens"
 )
 
 type Coverage interface {
