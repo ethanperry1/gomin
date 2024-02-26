@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"gomin/pkg/evaluate"
+	"github.com/ethanperry1/gomin/pkg/evaluate"
 )
 
 func main() {
