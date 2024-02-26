@@ -6,17 +6,17 @@ import (
 )
 
 const (
-	gobar = "gobar:"
+	gomin = "gomin:"
 )
 
-var directiveRegex = regexp.MustCompile(`\/\/\s*gobar:[a-z]+`)
+var directiveRegex = regexp.MustCompile(`\/\/\s*gomin:[a-z]+`)
 
 func Tokenize(comment string) ([]string, bool) {
 	if !directiveRegex.MatchString(comment) {
 		return nil, false
 	}
 
-	res := strings.Split(comment, gobar)
+	res := strings.Split(comment, gomin)
 	directive := strings.Split(res[1], " ")[0]
 	components := strings.Split(directive, ":")
 

@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/ethanperry1/gobar/pkg/tokens"
+	"github.com/ethanperry1/gomin/pkg/tokens"
 )
 
 type (

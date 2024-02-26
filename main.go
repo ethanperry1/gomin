@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"gobar/pkg/evaluate"
+	"gomin/pkg/evaluate"
 )
 
 func main() {
@@ -34,17 +34,17 @@ func run() error {
 		fmt.Println("no valid default minimum package coverage supplied, defaulting to 0.0")
 	}
 
-	minFileCov, err  := strconv.ParseFloat(defFile, 64)
+	minFileCov, err := strconv.ParseFloat(defFile, 64)
 	if err != nil {
 		fmt.Println("no valid default minimum file coverage supplied, defaulting to 0.0")
 	}
 
-	minBlockCov, err  := strconv.ParseFloat(defblock, 64)
+	minBlockCov, err := strconv.ParseFloat(defblock, 64)
 	if err != nil {
 		fmt.Println("no valid default minimum function block coverage supplied, defaulting to 0.0")
 	}
 
-	evaluator := evaluate.New(name, root, profile, 
+	evaluator := evaluate.New(name, root, profile,
 		evaluate.InitDefaultPackageMinimum(minPackageCov),
 		evaluate.InitDefaultFileMinimum(minFileCov),
 		evaluate.InitDefaultFunctionMinimum(minBlockCov),
@@ -59,7 +59,7 @@ func run() error {
 
 	if overallCoverage < minOverallCov {
 		return fmt.Errorf("expected coverage of at least %0.2f -- coverage bar was not met", minOverallCov)
-	} 
+	}
 
 	return nil
 }

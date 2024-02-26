@@ -1,4 +1,4 @@
-module github.com/ethanperry1/gobar
+module github.com/ethanperry1/gomin
 
 go 1.21
 

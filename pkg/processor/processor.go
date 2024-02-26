@@ -5,8 +5,9 @@ package processor
 import (
 	"go/ast"
 	"go/token"
-	"github.com/ethanperry1/gobar/pkg/declarations"
-	"github.com/ethanperry1/gobar/pkg/tokens"
+
+	"github.com/ethanperry1/gomin/pkg/declarations"
+	"github.com/ethanperry1/gomin/pkg/tokens"
 )
 
 type (
@@ -39,9 +40,9 @@ func New(
 func (processor *FileProcessor) processFuncLit(name string, lit *ast.FuncLit) *declarations.Decl {
 	pos := processor.fst.Position(lit.Body.Pos())
 	return &declarations.Decl{
-		Line: pos.Line,
+		Line:   pos.Line,
 		Column: pos.Column,
-		Name: name,
+		Name:   name,
 	}
 }
 
