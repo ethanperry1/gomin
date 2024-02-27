@@ -33,24 +33,25 @@ func prettyPrint(depth int, name string, c Coverage) {
 func BarChart(c Coverage) {
 	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
 	fmt.Fprintln(w, "Code Location \tCoverage Before Directives \tCoverage After Directives \tPercentage")
-	barChart(w, "", "", c)
+	barChart(w, 20, "", "", c)
 	w.Flush()
 }
 
-func barChart(w *tabwriter.Writer, parent string, name string, c Coverage) {
+func barChart(w *tabwriter.Writer, length int, parent string, name string, c Coverage) {
 	children := c.Children()
 	if children == nil {
 		ratio := float64(c.After().Covered())/float64(c.After().Statements())
 		if c.After().Statements() == 0 {
 			ratio = 0
 		}
-		bar := fmt.Sprintf("%s%s", strings.Repeat("*", int(ratio * 20.0)), strings.Repeat(" ", int((1.0 - ratio) * 20.0)))
+		lines := int(ratio * float64(length))
+		bar := fmt.Sprintf("%s%s", strings.Repeat("*", lines), strings.Repeat(" ", length-lines))
 		stmts := fmt.Sprintf("(%d/%d)\t(%d/%d)", c.Before().Covered(), c.Before().Statements(), c.After().Covered(), c.After().Statements())
 		fmt.Fprintf(w, "%s (%d,%d):\t%s\t[%s]\n", parent, c.Line(), c.Col(), stmts, bar)
 		return
 	}
 
 	for key, child := range children {
-		barChart(w, filepath.Join(parent, name), key, child)
+		barChart(w, length, filepath.Join(parent, name), key, child)
 	}
 }
