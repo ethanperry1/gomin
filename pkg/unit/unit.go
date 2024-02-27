@@ -5,6 +5,8 @@ import (
 )
 
 type Coverage interface {
+	Line() int
+	Col() int
 	Before() tokens.Coverage
 	After() tokens.Coverage
 	Children() map[string]Coverage
@@ -78,7 +80,7 @@ func (parent *Parent) Evaluate() (Coverage, error) {
 
 	result.FullResult = FullResult{
 		before: before,
-		after:  &Result{
+		after: &Result{
 			Stmts: cov.Statements(),
 			Covd:  cov.Covered(),
 		},
@@ -89,46 +91,56 @@ func (parent *Parent) Evaluate() (Coverage, error) {
 
 type Child struct {
 	name       string
+	line       int
+	col        int
 	directives []tokens.LeveledComparer
 	coverage   tokens.Coverage
 }
 
-func NewChild(name string,
-	coverage tokens.Coverage) *Child {
+func NewChild(
+	name string,
+	line int,
+	col int,
+	coverage tokens.Coverage,
+) *Child {
 	return &Child{
 		name:     name,
+		line:     line,
+		col:      col,
 		coverage: coverage,
 	}
 }
 
-func (block *Child) Name() string {
-	return block.name
+func (child *Child) Name() string {
+	return child.name
 }
 
-func (block *Child) WithDirectives(directive ...tokens.LeveledComparer) {
-	block.directives = append(block.directives, directive...)
+func (child *Child) WithDirectives(directive ...tokens.LeveledComparer) {
+	child.directives = append(child.directives, directive...)
 }
 
-func (block *Child) Evaluate() (Coverage, error) {
+func (child *Child) Evaluate() (Coverage, error) {
 	before := &Result{
-		Stmts: block.coverage.Statements(),
-		Covd:  block.coverage.Covered(),
+		Stmts: child.coverage.Statements(),
+		Covd:  child.coverage.Covered(),
 	}
 
 	var err error
-	cov := block.coverage
-	for _, directive := range block.directives {
+	cov := child.coverage
+	for _, directive := range child.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
 			return nil, &BlockDirectiveError{
 				err:       err,
-				name:      block.name,
+				name:      child.name,
 				directive: directive.Directive(),
 			}
 		}
 	}
 
 	return &FullResult{
+		line: child.line,
+		col: child.col,
 		after: &Result{
 			Stmts: cov.Statements(),
 			Covd:  cov.Covered(),
@@ -152,8 +164,18 @@ func (result *ParentResult) Children() map[string]Coverage {
 }
 
 type FullResult struct {
+	line   int
+	col    int
 	before *Result
 	after  *Result
+}
+
+func (result *FullResult) Line() int {
+	return result.line
+}
+
+func (result *FullResult) Col() int {
+	return result.col
 }
 
 func (result *FullResult) Before() tokens.Coverage {

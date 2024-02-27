@@ -179,7 +179,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 				declCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
 				cov := results[decl.Name]
-				block := unit.NewChild(decl.Name, cov)
+				block := unit.NewChild(decl.Name, decl.Line, decl.Column, cov)
 				fl.WithChild(block)
 
 				var declTokens [][]string

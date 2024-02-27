@@ -11,12 +11,16 @@ func PrettyPrint(c Coverage) {
 }
 
 func prettyPrint(depth int, name string, c Coverage) {
-	fmt.Printf("%s├──%s: (%d/%d) (%d/%d)\n", strings.Repeat("|\t", depth), name, c.Before().Covered(), c.Before().Statements(), c.After().Covered(), c.After().Statements())
+	stmts := fmt.Sprintf("(%d/%d) (%d/%d)", c.Before().Covered(), c.Before().Statements(), c.After().Covered(), c.After().Statements())
+	indentedName := fmt.Sprintf("%s├──%s", strings.Repeat("|\t", depth), name)
 
 	children := c.Children()
 	if children == nil {
+		fmt.Printf("%s (%d,%d): %s\n", indentedName, c.Line(), c.Col(), stmts)
 		return
 	}
+
+	fmt.Printf("%s: %s\n", indentedName, stmts)
 
 	for name, child := range children {
 		prettyPrint(depth+1, name, child)
