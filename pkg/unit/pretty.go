@@ -2,7 +2,10 @@ package unit
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"text/tabwriter"
 )
 
 func PrettyPrint(c Coverage) {
@@ -24,5 +27,27 @@ func prettyPrint(depth int, name string, c Coverage) {
 
 	for name, child := range children {
 		prettyPrint(depth+1, name, child)
+	}
+}
+
+func BarChart(c Coverage) {
+	w := tabwriter.NewWriter(os.Stdout, 1, 1, 1, ' ', 0)
+	fmt.Fprintln(w, "Code Location \tCoverage Before Directives \tCoverage After Directives \tPercentage")
+	barChart(w, "", "", c)
+	w.Flush()
+}
+
+func barChart(w *tabwriter.Writer, parent string, name string, c Coverage) {
+	children := c.Children()
+	if children == nil {
+		ratio := float64(c.After().Covered())/float64(c.After().Statements())
+		bar := fmt.Sprintf("%s%s", strings.Repeat("*", int(ratio * 20.0)), strings.Repeat(" ", int((1.0 - ratio) * 20.0)))
+		stmts := fmt.Sprintf("(%d/%d)\t(%d/%d)", c.Before().Covered(), c.Before().Statements(), c.After().Covered(), c.After().Statements())
+		fmt.Fprintf(w, "%s (%d,%d):\t%s\t[%s]\n", parent, c.Line(), c.Col(), stmts, bar)
+		return
+	}
+
+	for key, child := range children {
+		barChart(w, filepath.Join(parent, name), key, child)
 	}
 }

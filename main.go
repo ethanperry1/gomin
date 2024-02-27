@@ -55,7 +55,7 @@ func run() error {
 		return err
 	}
 
-	unit.PrettyPrint(cov)
+	unit.BarChart(cov)
 
 	overallCoverage := float64(cov.After().Covered()) / float64(cov.After().Statements())
 	fmt.Printf("Evaluated overall coverage of %0.2f -- %d statement(s) covered of %d total statement(s).\n", overallCoverage, cov.After().Covered(), cov.After().Statements())
