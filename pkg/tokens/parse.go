@@ -28,7 +28,7 @@ func Parse(pkg bool, level Level, components ...string) (LeveledComparer, error)
 		return nil, &MissingArgument{}
 	}
 
-	if !pkg && Command(components[0]) == Pkg {
+	if !pkg == (Command(components[0]) == Pkg) {
 		return nil, nil
 	}
 
