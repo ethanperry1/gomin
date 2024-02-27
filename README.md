@@ -17,6 +17,57 @@ func MyFunction() {
 }
 ```
 
+## Quick Start
+
+Run as Executable with Go Install:
+
+```sh
+# Install tool.
+go install github.com/ethanperry1/gomin@latest
+
+# Profile must be present:
+go test ./... -coverprofile=profile
+
+# Optional parameters:
+# export OVERALL_MIN_COV=0.8
+# export DEFAULT_MIN_PACKAGE_COV=0.7
+# export DEFAULT_MIN_FILE_COV=0.6
+# export DEFAULT_MIN_BLOCK_COV=0.5
+
+export ROOT=. # Root directory of project.
+export PROFILE=profile # Path to profile.
+export NAME=gomin # Name of project in go.mod
+go run ./cmd
+```
+
+With evaluation API:
+
+__Shell__
+```sh
+# Add to project.
+go get github.com/ethanperry1/gomin@latest
+```
+
+__Go Code__
+```go
+import "github.com/ethanperry1/gomin/pkg/evaluate"
+
+const (
+    name="gomin"
+    root="/home/user/work/gomin"
+    profile="profile"
+)
+
+func main() {
+    evaluator := evaluate.New(name, root, profile)
+    cov, err := evaluator.EvalCoverage()
+    if err != nil {
+        panic(err)
+    }
+}
+
+```
+
 ## Directives
 
 __Types__
@@ -56,47 +107,6 @@ func MyFunction() {...}
 // Function variable level directive.
 //gomin:min:0.5
 var myFunc = func() {...}
-```
-
-__Running__
-
-As executable:
-
-```sh
-# Profile must be present:
-# go test ./... -coverprofile=profile
-
-# Optional parameters:
-# export OVERALL_MIN_COV=0.8
-# export DEFAULT_MIN_PACKAGE_COV=0.7
-# export DEFAULT_MIN_FILE_COV=0.6
-# export DEFAULT_MIN_BLOCK_COV=0.5
-
-export ROOT=. # Root directory of project.
-export PROFILE=profile # Path to profile.
-export NAME=gomin # Name of project in go.mod
-go run ./cmd
-```
-
-With evaluation API:
-
-```go
-import "gomin/pkg/evaluate"
-
-const (
-    name="gomin"
-    root="/home/user/work/gomin"
-    profile="profile"
-)
-
-func main() {
-    evaluator := evaluate.New(name, root, profile)
-    cov, err := evaluator.EvalCoverage()
-    if err != nil {
-        panic(err)
-    }
-}
-
 ```
 
 __Rules__
