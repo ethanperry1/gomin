@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/ethanperry1/gomin/pkg/evaluate"
+	"github.com/ethanperry1/gomin/pkg/unit"
 )
 
 func main() {
@@ -53,6 +54,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	unit.PrettyPrint(cov)
 
 	overallCoverage := float64(cov.Covered()) / float64(cov.Statements())
 	fmt.Printf("Evaluated overall coverage of %0.2f -- %d statement(s) covered of %d total statement(s).\n", overallCoverage, cov.Covered(), cov.Statements())

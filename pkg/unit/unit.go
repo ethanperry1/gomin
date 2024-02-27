@@ -5,8 +5,8 @@ import (
 )
 
 type Coverage interface {
-	Statements() int
-	Covered() int
+	tokens.Coverage
+	Children() map[string]Coverage
 }
 
 type Parent interface {
@@ -48,7 +48,7 @@ func (project *Project) Children() []Unit {
 }
 
 func (project *Project) Evaluate() (Coverage, error) {
-	result := &Result{}
+	result := NewParentResult()
 	for _, child := range project.children {
 		cov, err := child.Evaluate()
 		if err != nil {
@@ -58,6 +58,7 @@ func (project *Project) Evaluate() (Coverage, error) {
 			}
 		}
 
+		result.ChildrenRes[child.Name()] = cov
 		result.Covd += cov.Covered()
 		result.Stmts += cov.Statements()
 	}
@@ -74,8 +75,10 @@ func (project *Project) Evaluate() (Coverage, error) {
 			}
 		}
 	}
+	result.Covd = cov.Covered()
+	result.Stmts = cov.Statements()
 
-	return cov, nil
+	return result, nil
 }
 
 type Package struct {
@@ -107,7 +110,7 @@ func (pack *Package) WithDirectives(directive ...tokens.LeveledComparer) {
 }
 
 func (pack *Package) Evaluate() (Coverage, error) {
-	result := &Result{}
+	result := NewParentResult()
 	for _, child := range pack.children {
 		cov, err := child.Evaluate()
 		if err != nil {
@@ -117,6 +120,7 @@ func (pack *Package) Evaluate() (Coverage, error) {
 			}
 		}
 
+		result.ChildrenRes[child.Name()] = cov
 		result.Covd += cov.Covered()
 		result.Stmts += cov.Statements()
 	}
@@ -133,8 +137,10 @@ func (pack *Package) Evaluate() (Coverage, error) {
 			}
 		}
 	}
+	result.Covd = cov.Covered()
+	result.Stmts = cov.Statements()
 
-	return cov, nil
+	return result, nil
 }
 
 type File struct {
@@ -166,7 +172,7 @@ func (file *File) WithDirectives(directive ...tokens.LeveledComparer) {
 }
 
 func (file *File) Evaluate() (Coverage, error) {
-	result := &Result{}
+	result := NewParentResult()
 	for _, child := range file.children {
 		cov, err := child.Evaluate()
 		if err != nil {
@@ -175,7 +181,7 @@ func (file *File) Evaluate() (Coverage, error) {
 				name: file.name,
 			}
 		}
-
+		result.ChildrenRes[child.Name()] = cov
 		result.Covd += cov.Covered()
 		result.Stmts += cov.Statements()
 	}
@@ -192,18 +198,20 @@ func (file *File) Evaluate() (Coverage, error) {
 			}
 		}
 	}
+	result.Covd = cov.Covered()
+	result.Stmts = cov.Statements()
 
-	return cov, nil
+	return result, nil
 }
 
 type Block struct {
 	name       string
 	directives []tokens.LeveledComparer
-	coverage   Coverage
+	coverage   tokens.Coverage
 }
 
 func NewBlock(name string,
-	coverage Coverage) *Block {
+	coverage tokens.Coverage) *Block {
 	return &Block{
 		name:     name,
 		coverage: coverage,
@@ -232,7 +240,25 @@ func (block *Block) Evaluate() (Coverage, error) {
 		}
 	}
 
-	return cov, err
+	return &Result{
+		Stmts: cov.Statements(),
+		Covd:  cov.Covered(),
+	}, err
+}
+
+type ParentResult struct {
+	ChildrenRes map[string]Coverage
+	Result
+}
+
+func NewParentResult() *ParentResult {
+	return &ParentResult{
+		ChildrenRes: make(map[string]Coverage),
+	}
+}
+
+func (result *ParentResult) Children() map[string]Coverage {
+	return result.ChildrenRes
 }
 
 type Result struct {
@@ -246,4 +272,8 @@ func (result *Result) Statements() int {
 
 func (result *Result) Covered() int {
 	return result.Covd
+}
+
+func (result *Result) Children() map[string]Coverage {
+	return nil
 }

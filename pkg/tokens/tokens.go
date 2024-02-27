@@ -86,7 +86,6 @@ func NewMinimum(minimum float64) *MinimumCommand {
 	}
 }
 
-
 func (minimum *MinimumCommand) Compare(cov Coverage) (Coverage, error) {
 	actual := float64(cov.Covered()) / float64(cov.Statements())
 	if actual < minimum.minimum {

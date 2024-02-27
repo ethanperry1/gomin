@@ -80,7 +80,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 		return nil, err
 	}
 
-	project := unit.NewProject("")
+	project := unit.NewProject(evaluator.name)
 
 	projectCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 	projectCmps[tokens.Package] = append(projectCmps[tokens.Package], &tokens.ComparerWithLevel{
