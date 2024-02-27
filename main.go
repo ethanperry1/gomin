@@ -57,8 +57,8 @@ func run() error {
 
 	unit.PrettyPrint(cov)
 
-	overallCoverage := float64(cov.Covered()) / float64(cov.Statements())
-	fmt.Printf("Evaluated overall coverage of %0.2f -- %d statement(s) covered of %d total statement(s).\n", overallCoverage, cov.Covered(), cov.Statements())
+	overallCoverage := float64(cov.After().Covered()) / float64(cov.After().Statements())
+	fmt.Printf("Evaluated overall coverage of %0.2f -- %d statement(s) covered of %d total statement(s).\n", overallCoverage, cov.After().Covered(), cov.After().Statements())
 
 	if overallCoverage < minOverallCov {
 		return fmt.Errorf("expected coverage of at least %0.2f -- coverage bar was not met", minOverallCov)

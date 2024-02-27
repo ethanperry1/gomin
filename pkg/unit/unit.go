@@ -5,13 +5,9 @@ import (
 )
 
 type Coverage interface {
-	tokens.Coverage
+	Before() tokens.Coverage
+	After() tokens.Coverage
 	Children() map[string]Coverage
-}
-
-type Parent interface {
-	Children() []Unit
-	Unit
 }
 
 type Unit interface {
@@ -19,214 +15,106 @@ type Unit interface {
 	Evaluate() (Coverage, error)
 }
 
-type Project struct {
-	name       string
-	children   []Unit
-	directives []tokens.Comparer
-}
-
-func NewProject(name string) *Project {
-	return &Project{
-		name: name,
-	}
-}
-
-func (project *Project) WithChild(unit Unit) {
-	project.children = append(project.children, unit)
-}
-
-func (project *Project) WithDirectives(directive ...tokens.Comparer) {
-	project.directives = append(project.directives, directive...)
-}
-
-func (project *Project) Name() string {
-	return project.name
-}
-
-func (project *Project) Children() []Unit {
-	return project.children
-}
-
-func (project *Project) Evaluate() (Coverage, error) {
-	result := NewParentResult()
-	for _, child := range project.children {
-		cov, err := child.Evaluate()
-		if err != nil {
-			return nil, &ProjectError{
-				err:  err,
-				name: project.name,
-			}
-		}
-
-		result.ChildrenRes[child.Name()] = cov
-		result.Covd += cov.Covered()
-		result.Stmts += cov.Statements()
-	}
-
-	var err error
-	var cov tokens.Coverage = result
-	for _, directive := range project.directives {
-		cov, err = directive.Compare(cov)
-		if err != nil {
-			return nil, &ProjectDirectiveError{
-				err:       err,
-				directive: directive.Directive(),
-				name:      project.name,
-			}
-		}
-	}
-	result.Covd = cov.Covered()
-	result.Stmts = cov.Statements()
-
-	return result, nil
-}
-
-type Package struct {
+type Parent struct {
 	name       string
 	children   []Unit
 	directives []tokens.LeveledComparer
 }
 
-func NewPackage(name string) *Package {
-	return &Package{
+func NewParent(name string) *Parent {
+	return &Parent{
 		name: name,
 	}
 }
 
-func (pack *Package) Name() string {
-	return pack.name
+func (parent *Parent) Name() string {
+	return parent.name
 }
 
-func (pack *Package) Children() []Unit {
-	return pack.children
+func (parent *Parent) Children() []Unit {
+	return parent.children
 }
 
-func (pack *Package) WithChild(unit Unit) {
-	pack.children = append(pack.children, unit)
+func (parent *Parent) WithChild(unit Unit) {
+	parent.children = append(parent.children, unit)
 }
 
-func (pack *Package) WithDirectives(directive ...tokens.LeveledComparer) {
-	pack.directives = append(pack.directives, directive...)
+func (parent *Parent) WithDirectives(directive ...tokens.LeveledComparer) {
+	parent.directives = append(parent.directives, directive...)
 }
 
-func (pack *Package) Evaluate() (Coverage, error) {
+func (parent *Parent) Evaluate() (Coverage, error) {
+	before := &Result{}
 	result := NewParentResult()
-	for _, child := range pack.children {
-		cov, err := child.Evaluate()
-		if err != nil {
-			return nil, &PackageError{
-				err:  err,
-				name: pack.name,
-			}
-		}
-
-		result.ChildrenRes[child.Name()] = cov
-		result.Covd += cov.Covered()
-		result.Stmts += cov.Statements()
-	}
-
-	var err error
-	var cov tokens.Coverage = result
-	for _, directive := range pack.directives {
-		cov, err = directive.Compare(cov)
-		if err != nil {
-			return nil, &PackageDirectiveError{
-				err:       err,
-				directive: directive.Directive(),
-				name:      pack.name,
-			}
-		}
-	}
-	result.Covd = cov.Covered()
-	result.Stmts = cov.Statements()
-
-	return result, nil
-}
-
-type File struct {
-	name       string
-	children   []Unit
-	directives []tokens.LeveledComparer
-}
-
-func NewFile(name string) *File {
-	return &File{
-		name: name,
-	}
-}
-
-func (file *File) Name() string {
-	return file.name
-}
-
-func (file *File) Children() []Unit {
-	return file.children
-}
-
-func (file *File) WithChild(unit Unit) {
-	file.children = append(file.children, unit)
-}
-
-func (file *File) WithDirectives(directive ...tokens.LeveledComparer) {
-	file.directives = append(file.directives, directive...)
-}
-
-func (file *File) Evaluate() (Coverage, error) {
-	result := NewParentResult()
-	for _, child := range file.children {
+	for _, child := range parent.children {
 		cov, err := child.Evaluate()
 		if err != nil {
 			return nil, &FileError{
 				err:  err,
-				name: file.name,
+				name: parent.name,
 			}
 		}
+
 		result.ChildrenRes[child.Name()] = cov
-		result.Covd += cov.Covered()
-		result.Stmts += cov.Statements()
+		before.Covd += cov.After().Covered()
+		before.Stmts += cov.After().Statements()
 	}
 
 	var err error
-	var cov tokens.Coverage = result
-	for _, directive := range file.directives {
+	var cov tokens.Coverage = &Result{
+		Stmts: before.Stmts,
+		Covd:  before.Covd,
+	}
+	for _, directive := range parent.directives {
 		cov, err = directive.Compare(cov)
 		if err != nil {
 			return nil, &FileDirectiveError{
 				err:       err,
-				name:      file.name,
+				name:      parent.name,
 				directive: directive.Directive(),
 			}
 		}
 	}
-	result.Covd = cov.Covered()
-	result.Stmts = cov.Statements()
+
+	result.FullResult = FullResult{
+		before: before,
+		after:  &Result{
+			Stmts: cov.Statements(),
+			Covd:  cov.Covered(),
+		},
+	}
 
 	return result, nil
 }
 
-type Block struct {
+type Child struct {
 	name       string
 	directives []tokens.LeveledComparer
 	coverage   tokens.Coverage
 }
 
-func NewBlock(name string,
-	coverage tokens.Coverage) *Block {
-	return &Block{
+func NewChild(name string,
+	coverage tokens.Coverage) *Child {
+	return &Child{
 		name:     name,
 		coverage: coverage,
 	}
 }
 
-func (block *Block) Name() string {
+func (block *Child) Name() string {
 	return block.name
 }
 
-func (block *Block) WithDirectives(directive ...tokens.LeveledComparer) {
+func (block *Child) WithDirectives(directive ...tokens.LeveledComparer) {
 	block.directives = append(block.directives, directive...)
 }
 
-func (block *Block) Evaluate() (Coverage, error) {
+func (block *Child) Evaluate() (Coverage, error) {
+	before := &Result{
+		Stmts: block.coverage.Statements(),
+		Covd:  block.coverage.Covered(),
+	}
+
 	var err error
 	cov := block.coverage
 	for _, directive := range block.directives {
@@ -240,15 +128,17 @@ func (block *Block) Evaluate() (Coverage, error) {
 		}
 	}
 
-	return &Result{
-		Stmts: cov.Statements(),
-		Covd:  cov.Covered(),
+	return &FullResult{
+		after: &Result{
+			Stmts: cov.Statements(),
+			Covd:  cov.Covered(),
+		}, before: before,
 	}, err
 }
 
 type ParentResult struct {
 	ChildrenRes map[string]Coverage
-	Result
+	FullResult
 }
 
 func NewParentResult() *ParentResult {
@@ -259,6 +149,23 @@ func NewParentResult() *ParentResult {
 
 func (result *ParentResult) Children() map[string]Coverage {
 	return result.ChildrenRes
+}
+
+type FullResult struct {
+	before *Result
+	after  *Result
+}
+
+func (result *FullResult) Before() tokens.Coverage {
+	return result.before
+}
+
+func (result *FullResult) After() tokens.Coverage {
+	return result.after
+}
+
+func (result *FullResult) Children() map[string]Coverage {
+	return nil
 }
 
 type Result struct {
@@ -272,8 +179,4 @@ func (result *Result) Statements() int {
 
 func (result *Result) Covered() int {
 	return result.Covd
-}
-
-func (result *Result) Children() map[string]Coverage {
-	return nil
 }

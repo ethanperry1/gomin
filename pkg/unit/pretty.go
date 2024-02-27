@@ -11,7 +11,7 @@ func PrettyPrint(c Coverage) {
 }
 
 func prettyPrint(depth int, name string, c Coverage) {
-	fmt.Printf("%s├──%s: %d/%d\n", strings.Repeat("|\t", depth), name, c.Covered(), c.Statements())
+	fmt.Printf("%s├──%s: (%d/%d) (%d/%d)\n", strings.Repeat("|\t", depth), name, c.Before().Covered(), c.Before().Statements(), c.After().Covered(), c.After().Statements())
 
 	children := c.Children()
 	if children == nil {

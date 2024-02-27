@@ -80,7 +80,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 		return nil, err
 	}
 
-	project := unit.NewProject(evaluator.name)
+	project := unit.NewParent(evaluator.name)
 
 	projectCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 	projectCmps[tokens.Package] = append(projectCmps[tokens.Package], &tokens.ComparerWithLevel{
@@ -97,7 +97,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 		pkgCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
-		pack := unit.NewPackage(dir)
+		pack := unit.NewParent(dir)
 		project.WithChild(pack)
 
 		var packageTokens [][]string
@@ -136,7 +136,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 				continue
 			}
 
-			fl := unit.NewFile(name)
+			fl := unit.NewParent(name)
 			pack.WithChild(fl)
 
 			var fileTokens [][]string
@@ -179,7 +179,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 				declCmps := make(map[tokens.Level][]tokens.LeveledComparer)
 
 				cov := results[decl.Name]
-				block := unit.NewBlock(decl.Name, cov)
+				block := unit.NewChild(decl.Name, cov)
 				fl.WithChild(block)
 
 				var declTokens [][]string
