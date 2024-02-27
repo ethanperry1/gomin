@@ -51,15 +51,7 @@ func (processor *FileProcessor) processValueSpec(spec *ast.ValueSpec) []*declara
 		return []*declarations.Decl{}
 	}
 
-	_, ok := spec.Values[0].(*ast.FuncLit)
-	if !ok {
-		return []*declarations.Decl{}
-	}
-
-	decls := make([]*declarations.Decl, len(spec.Values))
-	for idx, value := range spec.Values {
-		decls[idx] = processor.processFuncLit(spec.Names[idx].Name, value.(*ast.FuncLit))
-	}
+	decls := processor.processExprs(spec.Values)
 
 	if spec.Doc != nil {
 		comments := make([]string, len(spec.Doc.List))
@@ -129,4 +121,124 @@ func (processor *FileProcessor) Process() []*declarations.Decl {
 	}
 
 	return decls
+}
+
+func (processor *FileProcessor) processExprs(exprs []ast.Expr) []*declarations.Decl {
+	var decls []*declarations.Decl
+	for _, expr := range exprs {
+		decls = append(decls, processor.processExpr(expr)...)
+	}
+
+	return decls
+}
+
+func (processor *FileProcessor) processExpr(expr ast.Expr) []*declarations.Decl {
+	switch e := expr.(type) {
+	case *ast.FuncLit:
+		return processor.parseFuncLit(e)
+	case *ast.CompositeLit:
+		return processor.parseCompositeLit(e)
+	case *ast.ParenExpr:
+		return processor.parseParenExpr(e)
+	case *ast.IndexExpr:
+		return processor.parseIndexExpr(e)
+	case *ast.IndexListExpr:
+		return processor.parseIndexListExpr(e)
+	case *ast.SliceExpr:
+		return processor.parseSliceExpr(e)
+	case *ast.TypeAssertExpr:
+		return processor.parseTypeAssertExpr(e)
+	case *ast.CallExpr:
+		return processor.parseCallExpr(e)
+	case *ast.StarExpr:
+		return processor.parseStarExpr(e)
+	case *ast.UnaryExpr:
+		return processor.parseUnaryExpr(e)
+	case *ast.BinaryExpr:
+		return processor.parseBinaryExpr(e)
+	case *ast.KeyValueExpr:
+		return processor.parseKeyValueExpr(e)
+	case *ast.Ellipsis:
+		return processor.parseEllipsis(e)
+	}
+
+	return []*declarations.Decl{}
+}
+
+func (processor *FileProcessor) parseFuncLit(expr *ast.FuncLit) []*declarations.Decl {
+	pos := processor.fst.Position(expr.Body.Pos())
+	return []*declarations.Decl{
+		{
+			Line:   pos.Line,
+			Column: pos.Column,
+			Name:   "no name (function literal)",
+		},
+	}
+}
+
+func (processor *FileProcessor) parseCompositeLit(expr *ast.CompositeLit) []*declarations.Decl {
+	return processor.processExprs(expr.Elts)
+}
+
+func (processor *FileProcessor) parseParenExpr(expr *ast.ParenExpr) []*declarations.Decl {
+	return processor.processExpr(expr.X)
+}
+
+func (processor *FileProcessor) parseIndexExpr(expr *ast.IndexExpr) []*declarations.Decl {
+	return append(processor.processExpr(expr.X), processor.processExpr(expr.Index)...)
+}
+
+func (processor *FileProcessor) parseIndexListExpr(expr *ast.IndexListExpr) []*declarations.Decl {
+	return append(processor.processExpr(expr.X), processor.processExprs(expr.Indices)...)
+}
+
+func (processor *FileProcessor) parseSliceExpr(expr *ast.SliceExpr) []*declarations.Decl {
+	decls := processor.processExpr(expr.X)
+
+	if expr.Low != nil {
+		decls = append(decls, processor.processExpr(expr.Low)...)
+	}
+
+	if expr.High != nil {
+		decls = append(decls, processor.processExpr(expr.High)...)
+	}
+
+	if expr.Max != nil {
+		decls = append(decls, processor.processExpr(expr.Max)...)
+	}
+
+	return decls
+}
+
+func (processor *FileProcessor) parseTypeAssertExpr(expr *ast.TypeAssertExpr) []*declarations.Decl {
+	decls := processor.processExpr(expr.X)
+	if expr.Type != nil {
+		decls = append(decls, processor.processExpr(expr.Type)...)
+	}
+
+	return decls
+}
+
+func (processor *FileProcessor) parseCallExpr(expr *ast.CallExpr) []*declarations.Decl {
+	return append(processor.processExpr(expr.Fun), processor.processExprs(expr.Args)...)
+}
+
+func (processor *FileProcessor) parseStarExpr(expr *ast.StarExpr) []*declarations.Decl {
+	return processor.processExpr(expr.X)
+}
+
+func (processor *FileProcessor) parseUnaryExpr(expr *ast.UnaryExpr) []*declarations.Decl {
+	return processor.processExpr(expr.X)
+}
+
+func (processor *FileProcessor) parseBinaryExpr(expr *ast.BinaryExpr) []*declarations.Decl {
+	return append(processor.processExpr(expr.X), processor.processExpr(expr.Y)...)
+}
+
+func (processor *FileProcessor) parseKeyValueExpr(expr *ast.KeyValueExpr) []*declarations.Decl {
+	return append(processor.processExpr(expr.Key), processor.processExpr(expr.Value)...)
+}
+
+func (processor *FileProcessor) parseEllipsis(expr *ast.Ellipsis) []*declarations.Decl {
+	return processor.processExpr(expr.Elt)
 }

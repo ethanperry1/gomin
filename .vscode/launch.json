@@ -13,7 +13,7 @@
             "env": {
                 "ROOT": ".",
                 "PROFILE": "profile",
-                "NAME": "gomin"
+                "NAME": "github.com/ethanperry1/gomin"
             }
         }
 
