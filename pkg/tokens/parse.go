@@ -43,11 +43,11 @@ func Parse(pkg bool, level Level, components ...string) (LeveledComparer, error)
 func ParseCommand(components ...string) (Comparer, error) {
 	switch Command(components[0]) {
 	case Min:
-		return ParseMin(components[1:]...)
+		return ParseMin(components...)
 	case Exclude:
-		return ParseExclude(components[1:]...)
+		return ParseExclude(components...)
 	case Regex:
-		return ParseRegex(components[1:]...)
+		return ParseRegex(components...)
 	}
 
 	return nil, &UnknownCommandError{
@@ -57,19 +57,19 @@ func ParseCommand(components ...string) (Comparer, error) {
 }
 
 func ParseRegex(components ...string) (Comparer, error) {
-	if len(components) < 1 {
+	if len(components) < 3 {
 		return nil, &MissingArgument{}
 	}
 
-	reg, err := regexp.Compile(components[0])
+	reg, err := regexp.Compile(components[1])
 	if err != nil {
 		return nil, &InvalidRegexError{
-			reg: components[0],
+			reg: components[1],
 			err: err,
 		}
 	}
 
-	subCommand, err := ParseCommand(components[1:]...)
+	subCommand, err := ParseCommand(components[2:]...)
 	if err != nil {
 		return nil, err
 	}
