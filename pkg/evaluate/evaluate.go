@@ -3,7 +3,6 @@ package evaluate
 import (
 	"path/filepath"
 
-	"github.com/ethanperry1/gomin/pkg/coverage"
 	"github.com/ethanperry1/gomin/pkg/declarations"
 	"github.com/ethanperry1/gomin/pkg/processor"
 	"github.com/ethanperry1/gomin/pkg/profiles"
@@ -170,7 +169,7 @@ func (evaluator *Evaluator) EvalCoverage() (unit.Coverage, error) {
 
 			sortedDeclarations := declarations.New(declarations.Sort(decls))
 
-			coverageCalculator := coverage.New(sortedDeclarations)
+			coverageCalculator := unit.NewCoverageCalculator(sortedDeclarations)
 
 			results := coverageCalculator.ProcessCoverage(profile)
 

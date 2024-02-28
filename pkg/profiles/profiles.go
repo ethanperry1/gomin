@@ -1,3 +1,4 @@
+//gomin:pkg:default:file:regex:profiles.go:exclude
 package profiles
 
 import "golang.org/x/tools/cover"

@@ -49,3 +49,12 @@ type InvalidDefaultCommandError struct {
 func (err *InvalidDefaultCommandError) Error() string {
 	return fmt.Sprintf("the argument %q is not valid for the default command", err.argument)
 }
+
+type InvalidRegexError struct {
+	reg string
+	err error
+}
+
+func (err *InvalidRegexError) Error() string {
+	return fmt.Sprintf("regex sequence %q is not valid: %s", err.reg, err.err.Error())
+}

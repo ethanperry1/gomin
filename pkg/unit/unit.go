@@ -46,7 +46,9 @@ func (parent *Parent) WithDirectives(directive ...tokens.LeveledComparer) {
 }
 
 func (parent *Parent) Evaluate() (Coverage, error) {
-	before := &Result{}
+	before := &Result{
+		Nme: parent.name,
+	}
 	result := NewParentResult()
 	for _, child := range parent.children {
 		cov, err := child.Evaluate()
@@ -66,6 +68,7 @@ func (parent *Parent) Evaluate() (Coverage, error) {
 	var cov tokens.Coverage = &Result{
 		Stmts: before.Stmts,
 		Covd:  before.Covd,
+		Nme:   before.Nme,
 	}
 	for _, directive := range parent.directives {
 		cov, err = directive.Compare(cov)
@@ -80,10 +83,7 @@ func (parent *Parent) Evaluate() (Coverage, error) {
 
 	result.FullResult = FullResult{
 		before: before,
-		after: &Result{
-			Stmts: cov.Statements(),
-			Covd:  cov.Covered(),
-		},
+		after:  cov,
 	}
 
 	return result, nil
@@ -121,14 +121,19 @@ func (child *Child) WithDirectives(directive ...tokens.LeveledComparer) {
 
 func (child *Child) Evaluate() (Coverage, error) {
 	before := &Result{
+		Nme:   child.name,
 		Stmts: child.coverage.Statements(),
 		Covd:  child.coverage.Covered(),
 	}
 
 	var err error
-	cov := child.coverage
+	var after tokens.Coverage = &Result{
+		Nme:   child.name,
+		Stmts: child.coverage.Statements(),
+		Covd:  child.coverage.Covered(),
+	}
 	for _, directive := range child.directives {
-		cov, err = directive.Compare(cov)
+		after, err = directive.Compare(after)
 		if err != nil {
 			return nil, &BlockDirectiveError{
 				err:       err,
@@ -139,12 +144,10 @@ func (child *Child) Evaluate() (Coverage, error) {
 	}
 
 	return &FullResult{
-		line: child.line,
-		col: child.col,
-		after: &Result{
-			Stmts: cov.Statements(),
-			Covd:  cov.Covered(),
-		}, before: before,
+		line:   child.line,
+		col:    child.col,
+		after:  after,
+		before: before,
 	}, err
 }
 
@@ -166,8 +169,8 @@ func (result *ParentResult) Children() map[string]Coverage {
 type FullResult struct {
 	line   int
 	col    int
-	before *Result
-	after  *Result
+	before tokens.Coverage
+	after  tokens.Coverage
 }
 
 func (result *FullResult) Line() int {
@@ -188,17 +191,4 @@ func (result *FullResult) After() tokens.Coverage {
 
 func (result *FullResult) Children() map[string]Coverage {
 	return nil
-}
-
-type Result struct {
-	Stmts int
-	Covd  int
-}
-
-func (result *Result) Statements() int {
-	return result.Stmts
-}
-
-func (result *Result) Covered() int {
-	return result.Covd
 }
