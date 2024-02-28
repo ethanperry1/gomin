@@ -1,5 +1,9 @@
 package tokens
 
+import (
+	"regexp"
+)
+
 type MinimumCommand struct {
 	minimum   float64
 	directive []string
