@@ -1,6 +1,6 @@
 package api
 
-type Option func()
+type Option func() ([]*ruleSet, error)
 
 type ArgType int
 
@@ -8,11 +8,13 @@ const (
 	Any ArgType = iota
 	Fltr
 	Name
+	Pair
+	Index
 )
 
 type CommandArgument interface {
 	Type() ArgType
-	Value() string
+	Value() any
 }
 
 type CommandSurface interface {
@@ -21,12 +23,14 @@ type CommandSurface interface {
 }
 
 type PackageInstance interface {
+	CommandSurface
 	FileParent
 	FunctionParent
 	File(name string) FileInstance
 }
 
 type FileInstance interface {
+	CommandSurface
 	FunctionParent
 	Method(receiver string, name string) CommandSurface
 	Function(name string) CommandSurface

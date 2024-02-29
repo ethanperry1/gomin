@@ -1,16 +1,16 @@
 package api
 
 type Node interface {
-	Children() map[string]Node
+	Children() map[any]Node
 	Leaf() (Statements, bool)
 }
 
 type node struct {
-	nodes      map[string]Node
+	nodes      map[any]Node
 	statements *statements
 }
 
-func AddNode(name string, new *node) func(*node) {
+func AddNode(name any, new *node) func(*node) {
 	return func(n *node) {
 		n.nodes[name] = new
 	}
@@ -26,7 +26,7 @@ func NewNode(
 	options ...func(*node),
 ) *node {
 	node := &node{
-		nodes: make(map[string]Node),
+		nodes: make(map[any]Node),
 	}
 
 	for _, option := range options {
@@ -36,7 +36,7 @@ func NewNode(
 	return node
 }
 
-func (node *node) Children() map[string]Node {
+func (node *node) Children() map[any]Node {
 	return node.nodes
 }
 

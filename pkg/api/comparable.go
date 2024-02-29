@@ -16,7 +16,7 @@ type Comparable interface {
 
 type StatementNode interface {
 	Statements
-	Children() map[string]StatementNode
+	Children() map[any]StatementNode
 }
 
 type Statements interface {
@@ -63,20 +63,11 @@ func Ratio(statements Statements) float64 {
 
 type statementNode struct {
 	Statements
-	children map[string]StatementNode
+	children map[any]StatementNode
 }
 
-func (statements *statementNode) Children() map[string]StatementNode {
+func (statements *statementNode) Children() map[any]StatementNode {
 	return statements.children
-}
-
-type comparable struct {
-	Statements
-	level Level
-}
-
-func (comparable *comparable) Level() Level {
-	return comparable.level
 }
 
 type evaluatedStatements struct {

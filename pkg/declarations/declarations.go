@@ -7,7 +7,7 @@ import (
 type Decl struct {
 	Line      int
 	Column    int
-	Name      string
+	Name      any
 	Comments  []string
 	FileName  string
 	Directory string

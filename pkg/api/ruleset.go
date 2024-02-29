@@ -1,7 +1,7 @@
 package api
 
 type RuleSet interface {
-	Children(name string) RuleSet
+	Children(name any) RuleSet
 	StatementEvaluator
 }
 
@@ -9,6 +9,7 @@ type ruleSet struct {
 	evaluators []StatementEvaluator
 	rules      []*ruleSet
 	matchers   []Matcher
+	ruleType   ArgType
 }
 
 func AddRuleSet(r ...*ruleSet) func(*ruleSet) {
@@ -45,9 +46,9 @@ func NewRuleSet(
 	return ruleSet
 }
 
-func (set *ruleSet) match(name string) bool {
+func (set *ruleSet) match(matches any) bool {
 	for _, matcher := range set.matchers {
-		if matcher.MatchString(name) {
+		if matcher.Match(matches) {
 			return true
 		}
 	}
@@ -55,7 +56,7 @@ func (set *ruleSet) match(name string) bool {
 	return false
 }
 
-func (set *ruleSet) Children(name string) RuleSet {
+func (set *ruleSet) Children(name any) RuleSet {
 	var rules []*ruleSet
 	var evals []StatementEvaluator
 	for _, rule := range set.rules {

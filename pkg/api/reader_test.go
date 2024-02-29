@@ -7,7 +7,7 @@ import (
 )
 
 func TestParser(t *testing.T) {
-	parser := NewProfileParser("../..", "profile", "github.com/ethanperry1/gomin")
+	parser := NewProfileReader("../..", "profile", "github.com/ethanperry1/gomin")
 	_, err := parser.CreateNodeTree()
 	require.NoError(t, err)
 }

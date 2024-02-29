@@ -2,19 +2,19 @@ package api
 
 type commandArguments struct {
 	argType ArgType
-	value   string
+	value   any
 }
 
 func (arg *commandArguments) Type() ArgType {
 	return arg.argType
 }
 
-func (arg *commandArguments) Value() string {
+func (arg *commandArguments) Value() any {
 	return arg.value
 }
 
 type commandSurface struct {
-	parent CommandSurface
+	parent  CommandSurface
 	command CommandArgument
 }
 
@@ -26,17 +26,17 @@ func (surface *commandSurface) Command() CommandArgument {
 	return surface.command
 }
 
-type packagesRuleBuilder struct{
+type packagesRuleBuilder struct {
 	CommandSurface
 }
 
 func (builder *packagesRuleBuilder) Filter(s string) PackageContext {
 	return &packageContextRuleBuilder{
 		CommandSurface: &commandSurface{
-			parent:  builder.CommandSurface,
+			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value: s,
+				value:   []any{s},
 			},
 		},
 	}
@@ -57,17 +57,17 @@ func (builder *packageContextRuleBuilder) Files() Files {
 	}
 }
 
-type filesRuleBuilder struct{
+type filesRuleBuilder struct {
 	CommandSurface
 }
 
 func (builder *filesRuleBuilder) Filter(s string) FileContext {
 	return &fileContextRuleBuilder{
 		CommandSurface: &commandSurface{
-			parent:  builder.CommandSurface,
+			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value: s,
+				value:   []any{s},
 			},
 		},
 	}
@@ -80,7 +80,7 @@ type fileContextRuleBuilder struct {
 func (builder *fileContextRuleBuilder) Functions() Functions {
 	return &functionsRuleBuilder{
 		CommandSurface: &commandSurface{
-			parent:  builder.CommandSurface,
+			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Any,
 			},
@@ -95,10 +95,10 @@ type functionsRuleBuilder struct {
 func (builder *functionsRuleBuilder) Filter(s string) CommandSurface {
 	return &functionCommandSurface{
 		CommandSurface: &commandSurface{
-			parent:  builder.CommandSurface,
+			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value: s,
+				value:   []any{s},
 			},
 		},
 	}
@@ -106,6 +106,100 @@ func (builder *functionsRuleBuilder) Filter(s string) CommandSurface {
 
 type functionCommandSurface struct {
 	CommandSurface
+}
+
+type packageInstanceRuleBuilder struct {
+	CommandSurface
+}
+
+func (builder *packageInstanceRuleBuilder) Files() Files {
+	return &filesRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
+}
+
+func (builder *packageInstanceRuleBuilder) Functions() Functions {
+	return &functionsRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: &commandSurface{
+				parent: builder.CommandSurface,
+				command: &commandArguments{
+					argType: Any,
+				},
+			},
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
+}
+
+func (builder *packageInstanceRuleBuilder) File(name string) FileInstance {
+	return &fileInstanceRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Name,
+				value:   []any{name},
+			},
+		},
+	}
+}
+
+type fileInstanceRuleBuilder struct {
+	CommandSurface
+}
+
+func (builder *fileInstanceRuleBuilder) Functions() Functions {
+	return &functionsRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
+}
+
+func (builder *fileInstanceRuleBuilder) Method(receiver string, name string) CommandSurface {
+	return &functionCommandSurface{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Pair,
+				value:   []any{receiver, name},
+			},
+		},
+	}
+}
+
+func (builder *fileInstanceRuleBuilder) Function(name string) CommandSurface {
+	return &functionCommandSurface{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Name,
+				value:   []any{name},
+			},
+		},
+	}
+}
+
+func (builder *fileInstanceRuleBuilder) Literal(index int) CommandSurface {
+	return &functionCommandSurface{
+		CommandSurface: &commandSurface{
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Index,
+				value: []any{index},
+			},
+		},
+	}
 }
 
 func AllPackages() Packages {
@@ -119,25 +213,51 @@ func AllPackages() Packages {
 	}
 }
 
-func Min(float64, ...CommandSurface) Option {
-
-	return func() {}
+func AllFiles() Files {
+	return &filesRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: &commandSurface{
+				parent: nil,
+				command: &commandArguments{
+					argType: Any,
+				},
+			},
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
 }
 
-func Exclude(...CommandSurface) Option {
-
-	return func() {}
+func AllFunctions() Functions {
+	return &functionsRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: &commandSurface{
+				parent: &commandSurface{
+					parent: nil,
+					command: &commandArguments{
+						argType: Any,
+					},
+				},
+				command: &commandArguments{
+					argType: Any,
+				},
+			},
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
 }
 
-func AllFiles() Files
-func AllFunctions() Functions
-func Package(name string) PackageInstance
-
-func Evaluate(...Option)
-
-
-
-
-
-
-
+func Package(name string) PackageInstance {
+	return &packageInstanceRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent: nil,
+			command: &commandArguments{
+				argType: Name,
+				value:   []any{name},
+			},
+		},
+	}
+}

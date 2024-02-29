@@ -3,7 +3,6 @@
 package processor
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 
@@ -172,7 +171,7 @@ func (processor *FileProcessor) parseFuncLit(index int, expr *ast.FuncLit) (int,
 		{
 			Line:   pos.Line,
 			Column: pos.Column,
-			Name:   fmt.Sprintf("function literal #%d", index),
+			Name:   index,
 		},
 	}
 }

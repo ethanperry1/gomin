@@ -18,3 +18,17 @@ type CoverageBelowThresholdError struct {
 func (err *CoverageBelowThresholdError) Error() string {
 	return fmt.Sprintf("actual coverage was %0.2f where coverage of at least %0.2f was expected", err.actual, err.expected)
 }
+
+type InvalidCommandArgumentTypeError struct {
+	argType ArgType
+}
+
+func (err *InvalidCommandArgumentTypeError) Error() string {
+	return fmt.Sprintf("the argType %d is not valid", err.argType)
+}
+
+type InvalidCommandArgumentValueTypeError struct {}
+
+func (err *InvalidCommandArgumentValueTypeError) Error() string {
+	return "a command argument contained a value of an unexpected type"
+}

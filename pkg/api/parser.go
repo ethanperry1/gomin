@@ -1,97 +1,114 @@
 package api
 
-import (
-	"os"
-	"path/filepath"
+import "regexp"
 
-	"github.com/ethanperry1/gomin/pkg/declarations"
-	"github.com/ethanperry1/gomin/pkg/processor"
-	"github.com/ethanperry1/gomin/pkg/profiles"
-	"github.com/ethanperry1/gomin/pkg/visitor"
+func Min(min float64, surfaces ...CommandSurface) Option {
+	return func() ([]*ruleSet, error) {
+		eval, err := NewMinimumCommand(min)
+		if err != nil {
+			return nil, err
+		}
 
-	"golang.org/x/tools/cover"
-)
-
-type ProfileParser struct {
-	profile string
-	name    string
-	root string
-}
-
-func NewProfileParser(
-	root string,
-	profile string,
-	name string,
-) *ProfileParser {
-	return &ProfileParser{
-		root: root,
-		profile: profile,
-		name:    name,
+		return parseCommandSurfaces(eval, surfaces...)
 	}
 }
 
-func (parser *ProfileParser) CreateNodeTree() (Node, error) {
-	err := os.Chdir(parser.root)
+func Exclude(surfaces ...CommandSurface) Option {
+	return func() ([]*ruleSet, error) {
+		return parseCommandSurfaces(NewExcludeCommand(), surfaces...)
+	}
+}
+
+func parseCommandSurfaces(evaluator StatementEvaluator, surfaces ...CommandSurface) ([]*ruleSet, error) {
+	ruleSets := make([]*ruleSet, len(surfaces))
+	for idx, surface := range surfaces {
+		ruleSet, err := parseCommandSurface([]*ruleSet{}, []StatementEvaluator{evaluator}, surface)
+		if err != nil {
+			return nil, err
+		}
+		ruleSets[idx] = ruleSet
+	}
+
+	return ruleSets, nil
+}
+
+func parseCommandSurface(childSets []*ruleSet, evaluators []StatementEvaluator, surface CommandSurface) (*ruleSet, error) {
+	matcher, err := parseCommandArgs(surface.Command())
 	if err != nil {
 		return nil, err
 	}
 
-	profs, err := cover.ParseProfiles(parser.profile)
-	if err != nil {
-		return nil, err
+	parent, ok := surface.Parent()
+	if !ok {
+		return NewRuleSet(
+			AddEvaluator(evaluators...),
+			AddRuleSet(childSets...),
+			AddMatcher(matcher),
+		), nil
 	}
 
-	profilesByName := profiles.New(profs)
+	return parseCommandSurface(
+		[]*ruleSet{
+			NewRuleSet(
+				AddEvaluator(evaluators...),
+				AddRuleSet(childSets...),
+				AddMatcher(matcher),
+			),
+		},
+		[]StatementEvaluator{},
+		parent,
+	)
+}
 
-	dirs := make(map[string]map[string]*visitor.File)
-	emplacer := visitor.NewEmplacer(dirs)
-	visitor := visitor.NewVisitor(emplacer)
-
-	err = filepath.WalkDir(".", visitor.Visit)
-	if err != nil {
-		return nil, err
-	}
-
-	pkgCount := 0
-	pkgOptions := make([]func(*node), len(dirs))
-	for dir, files := range dirs {
-		funcStmts := make(map[string]*statements)
-		for name, file := range files {
-			profile := profilesByName.Get(filepath.Join(parser.name, dir, name))
-			if profile == nil {
-				continue
-			}
-
-			decls := processor.New(file.Fst, file.Ast, dir, name).Process()
-
-			sortedDeclarations := declarations.New(declarations.Sort(decls))
-
-			for _, block := range profile.Blocks {
-				decl := sortedDeclarations.DeclByPosition(block.StartLine, block.StartCol)
-				result, ok := funcStmts[decl]
-				if !ok {
-					result = &statements{}
-					funcStmts[decl] = result
-				}
-
-				result.total += block.NumStmt
-
-				if block.Count > 0 {
-					result.covered += block.NumStmt
-				}
-			}
+func parseCommandArgs(args CommandArgument) (Matcher, error) {
+	switch args.Type() {
+	case Any:
+		return NewNoopMatcher(), nil
+	case Fltr:
+		values, err := parseValue[string](args.Value())
+		if err != nil {
+			return nil, err
 		}
 
-		count := 0
-		fileOptions := make([]func(*node), len(funcStmts))
-		for k, v := range funcStmts {
-			fileOptions[count] = AddNode(k, NewNode(AddStatement(v)))
-			count++
+		reg, err := regexp.Compile(values)
+		if err != nil {
+			return nil, err
 		}
 
-		pkgOptions[pkgCount] = AddNode(dir, NewNode(fileOptions...))
-		pkgCount++
+		return NewRegexpMatcher(reg.MatchString), nil
+	case Name:
+		values, err := parseValue[string](args.Value())
+		if err != nil {
+			return nil, err
+		}
+
+		return NewExactMatcher(values), nil
+	case Pair:
+		values, err := parseValue[NamePair](args.Value())
+		if err != nil {
+			return nil, err
+		}
+
+		return NewExactPairMatcher(values), nil
+	case Index:
+		values, err := parseValue[int](args.Value())
+		if err != nil {
+			return nil, err
+		}
+
+		return NewIndexMatcher(values), nil
 	}
 
-	return NewNode(pkgOptions...), nil
+	return nil, &InvalidCommandArgumentTypeError{
+		argType: args.Type(),
+	}
+}
+
+func parseValue[T any](v any) (T, error) {
+	arg, ok := v.(T)
+	if !ok {
+		return arg, &InvalidCommandArgumentValueTypeError{}
+	}
+
+	return arg, nil
 }
