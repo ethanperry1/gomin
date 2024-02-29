@@ -14,7 +14,6 @@ func main() {
 }
 
 func run() error {
-
 	evaluator, err := api.CreateEvaluator(".", "profile", "github.com/ethanperry1/gomin")
 	if err != nil {
 		return err
