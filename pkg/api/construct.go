@@ -49,8 +49,11 @@ type packageContextRuleBuilder struct {
 func (builder *packageContextRuleBuilder) Files() Files {
 	return &filesRuleBuilder{
 		CommandSurface: &commandSurface{
-			
-		}
+			parent: builder.CommandSurface,
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
 	}
 }
 
@@ -60,26 +63,49 @@ type filesRuleBuilder struct{
 
 func (builder *filesRuleBuilder) Filter(s string) FileContext {
 	return &fileContextRuleBuilder{
-		filter: s,
+		CommandSurface: &commandSurface{
+			parent:  builder.CommandSurface,
+			command: &commandArguments{
+				argType: Fltr,
+				value: s,
+			},
+		},
 	}
 }
 
 type fileContextRuleBuilder struct {
-	filter string
+	CommandSurface
 }
 
 func (builder *fileContextRuleBuilder) Functions() Functions {
-	return &functionsRuleBuilder{}
+	return &functionsRuleBuilder{
+		CommandSurface: &commandSurface{
+			parent:  builder.CommandSurface,
+			command: &commandArguments{
+				argType: Any,
+			},
+		},
+	}
 }
 
 type functionsRuleBuilder struct {
+	CommandSurface
 }
 
 func (builder *functionsRuleBuilder) Filter(s string) CommandSurface {
-	return &functionCommandSurface{}
+	return &functionCommandSurface{
+		CommandSurface: &commandSurface{
+			parent:  builder.CommandSurface,
+			command: &commandArguments{
+				argType: Fltr,
+				value: s,
+			},
+		},
+	}
 }
 
 type functionCommandSurface struct {
+	CommandSurface
 }
 
 func AllPackages() Packages {
@@ -108,3 +134,10 @@ func AllFunctions() Functions
 func Package(name string) PackageInstance
 
 func Evaluate(...Option)
+
+
+
+
+
+
+
