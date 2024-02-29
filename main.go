@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/ethanperry1/gomin/v0"
@@ -14,16 +15,16 @@ func main() {
 }
 
 func run() error {
-	evaluator, err := api.CreateEvaluator(".", "profile", "github.com/ethanperry1/gomin")
+	evaluator, err := v0.CreateEvaluator(".", "profile", "github.com/ethanperry1/gomin")
 	if err != nil {
 		return err
 	}
 
 	results, err := evaluator.Evaluate(
-		api.Min(
+		v0.Min(
 			0.7,
-			api.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
-			api.AllPackages(),
+			v0.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
+			v0.AllPackages(),
 		),
 	)
 	if err != nil {
@@ -35,6 +36,6 @@ func run() error {
 		return err
 	}
 
-	writer := api.NewWriter()
-	return writer.Write(file, api.Format(results, api.FileDepth))
+	writer := v0.NewWriter()
+	return writer.Write(file, v0.Format(results, v0.FileDepth))
 }

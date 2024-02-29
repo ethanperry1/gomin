@@ -1,4 +1,4 @@
-package api
+package v0
 
 type RuleSet interface {
 	Children(name any) RuleSet

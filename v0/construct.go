@@ -1,4 +1,4 @@
-package api
+package v0
 
 type commandArguments struct {
 	argType ArgType
@@ -196,7 +196,7 @@ func (builder *fileInstanceRuleBuilder) Literal(index int) CommandSurface {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Index,
-				value: index,
+				value:   index,
 			},
 		},
 	}

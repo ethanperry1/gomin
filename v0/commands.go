@@ -1,4 +1,4 @@
-package api
+package v0
 
 type MinimumCommand struct {
 	minimum float64
@@ -18,7 +18,7 @@ func (command *MinimumCommand) Apply(statements Statements) Statements {
 	ratio := Ratio(statements)
 	if ratio < command.minimum {
 		return &evaluatedStatements{
-			previous: statements,
+			previous:   statements,
 			Statements: statements,
 			err: &CoverageBelowThresholdError{
 				actual:   ratio,
@@ -40,12 +40,12 @@ func NewExcludeCommand() *ExcludeCommand {
 
 func (command *ExcludeCommand) Apply(old Statements) Statements {
 	return &evaluatedStatements{
-		previous:        old,
+		previous:   old,
 		Statements: &statements{},
 	}
 }
 
-type NoopCommand struct {}
+type NoopCommand struct{}
 
 func NewNoopCommand() *NoopCommand {
 	return &NoopCommand{}

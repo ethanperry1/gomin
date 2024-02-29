@@ -1,4 +1,9 @@
-package api
+package v0
+
+import (
+	"fmt"
+	"strings"
+)
 
 type Level int
 
@@ -33,7 +38,7 @@ type statements struct {
 
 func NewStatements(
 	covered int,
-	total   int,
+	total int,
 ) *statements {
 	return &statements{
 		covered: covered,
@@ -73,7 +78,7 @@ func (statements *statementNode) Children() map[any]StatementNode {
 type evaluatedStatements struct {
 	Statements
 	previous Statements
-	err error
+	err      error
 }
 
 func (statements *evaluatedStatements) Previous() Statements {
@@ -82,4 +87,46 @@ func (statements *evaluatedStatements) Previous() Statements {
 
 func (statements *evaluatedStatements) Valid() error {
 	return statements.err
+}
+
+type Error struct {
+	Err   error
+	Place []string
+}
+
+func Validate(node StatementNode, place ...string) []Error {
+	errs := ValidatePreviousStatements(node, place)
+
+	children := node.Children()
+	for name, child := range children {
+		errs = append(errs, Validate(child, append(place, nameToString(name))...)...)
+	}
+
+	return errs
+}
+
+func ValidatePreviousStatements(statements Statements, place []string) []Error {
+	if statements == nil {
+		return []Error{}
+	}
+
+	var errs []Error
+	if statements.Valid() != nil {
+		errs = []Error{
+			{
+				Err:   statements.Valid(),
+				Place: place,
+			},
+		}
+	}
+
+	return append(errs, ValidatePreviousStatements(statements.Previous(), place)...)
+}
+
+func ErrorsToRecord(errs []Error) [][]string {
+	records := make([][]string, len(errs))
+	for idx, err := range errs {
+		records[idx] = []string{fmt.Sprintf("[%s]", strings.Join(err.Place, ", ")), err.Err.Error()}
+	}
+	return records
 }

@@ -1,6 +1,6 @@
-// Package api processes files, subtracting away only the functions declared in the file.
+// package v0 processes files, subtracting away only the functions declared in the file.
 // These functions can be defined through a function declaration syntax or as an inline definition in a variable declaration.
-package api
+package v0
 
 import (
 	"go/ast"

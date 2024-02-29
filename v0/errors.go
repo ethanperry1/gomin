@@ -1,4 +1,4 @@
-package api
+package v0
 
 import "fmt"
 
@@ -12,7 +12,7 @@ func (err *InvalidMinimumArgumentError) Error() string {
 
 type CoverageBelowThresholdError struct {
 	expected float64
-	actual float64
+	actual   float64
 }
 
 func (err *CoverageBelowThresholdError) Error() string {

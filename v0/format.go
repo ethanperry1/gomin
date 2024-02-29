@@ -1,4 +1,4 @@
-package api
+package v0
 
 import "fmt"
 
@@ -37,7 +37,7 @@ func createRecord(node StatementNode, names ...any) []string {
 	for idx, name := range names {
 		printedNames[idx] = nameToString(name)
 	}
-	
+
 	var reason string
 	valid := node.Valid() == nil
 	if !valid {

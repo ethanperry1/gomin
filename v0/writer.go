@@ -1,4 +1,4 @@
-package api
+package v0
 
 import (
 	"fmt"
@@ -13,13 +13,13 @@ type FlusherBuilder interface {
 
 type Writer struct {
 	Builder FlusherBuilder
-	Delim string
+	Delim   string
 }
 
 func NewWriter(options ...func(*Writer)) *Writer {
 	writer := &Writer{
 		Builder: NewTabWriterBuilder(),
-		Delim: "\t",
+		Delim:   "\t",
 	}
 
 	for _, option := range options {
@@ -43,12 +43,12 @@ type Flusher interface {
 }
 
 type TabWriterBuilder struct {
-	Writer func(output io.Writer, minwidth int, tabwidth int, padding int, padchar byte, flags uint) *tabwriter.Writer
+	Writer   func(output io.Writer, minwidth int, tabwidth int, padding int, padchar byte, flags uint) *tabwriter.Writer
 	MinWidth int
 	TabWidth int
-	Padding int
-	Padchar byte
-	Flags uint
+	Padding  int
+	Padchar  byte
+	Flags    uint
 }
 
 func NewTabWriterBuilder(options ...func(*TabWriterBuilder)) *TabWriterBuilder {
