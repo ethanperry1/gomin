@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/ethanperry1/gomin/pkg/declarations"
-	"github.com/ethanperry1/gomin/pkg/processor"
 	"github.com/ethanperry1/gomin/pkg/profiles"
 	"github.com/ethanperry1/gomin/pkg/visitor"
 
@@ -55,17 +54,18 @@ func (reader *ProfileReader) CreateNodeTree() (Node, error) {
 	pkgCount := 0
 	pkgOptions := make([]func(*node), len(dirs))
 	for dir, files := range dirs {
-		funcStmts := make(map[string]*statements)
+		var fileOptions []func(*node)
 		for name, file := range files {
 			profile := profilesByName.Get(filepath.Join(reader.name, dir, name))
 			if profile == nil {
 				continue
 			}
 
-			decls := processor.New(file.Fst, file.Ast, dir, name).Process()
+			decls := NewFileProcessor(file.Fst, file.Ast, dir, name).Process()
 
 			sortedDeclarations := declarations.New(declarations.Sort(decls))
 
+			funcStmts := make(map[any]*statements)
 			for _, block := range profile.Blocks {
 				decl := sortedDeclarations.DeclByPosition(block.StartLine, block.StartCol)
 				result, ok := funcStmts[decl]
@@ -80,13 +80,15 @@ func (reader *ProfileReader) CreateNodeTree() (Node, error) {
 					result.covered += block.NumStmt
 				}
 			}
-		}
 
-		count := 0
-		fileOptions := make([]func(*node), len(funcStmts))
-		for k, v := range funcStmts {
-			fileOptions[count] = AddNode(k, NewNode(AddStatement(v)))
-			count++
+			count := 0
+			blockOptions := make([]func(*node), len(funcStmts))
+			for k, v := range funcStmts {
+				blockOptions[count] = AddNode(k, NewNode(AddStatement(v)))
+				count++
+			}
+
+			fileOptions = append(fileOptions, AddNode(name, NewNode(blockOptions...)))
 		}
 
 		pkgOptions[pkgCount] = AddNode(dir, NewNode(fileOptions...))

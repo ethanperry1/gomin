@@ -36,7 +36,7 @@ func (builder *packagesRuleBuilder) Filter(s string) PackageContext {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value:   []any{s},
+				value:   s,
 			},
 		},
 	}
@@ -67,7 +67,7 @@ func (builder *filesRuleBuilder) Filter(s string) FileContext {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value:   []any{s},
+				value:   s,
 			},
 		},
 	}
@@ -98,7 +98,7 @@ func (builder *functionsRuleBuilder) Filter(s string) CommandSurface {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Fltr,
-				value:   []any{s},
+				value:   s,
 			},
 		},
 	}
@@ -145,7 +145,7 @@ func (builder *packageInstanceRuleBuilder) File(name string) FileInstance {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Name,
-				value:   []any{name},
+				value:   name,
 			},
 		},
 	}
@@ -172,7 +172,7 @@ func (builder *fileInstanceRuleBuilder) Method(receiver string, name string) Com
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Pair,
-				value:   []any{receiver, name},
+				value:   NamePair{receiver, name},
 			},
 		},
 	}
@@ -184,7 +184,7 @@ func (builder *fileInstanceRuleBuilder) Function(name string) CommandSurface {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Name,
-				value:   []any{name},
+				value:   name,
 			},
 		},
 	}
@@ -196,7 +196,7 @@ func (builder *fileInstanceRuleBuilder) Literal(index int) CommandSurface {
 			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Index,
-				value: []any{index},
+				value: index,
 			},
 		},
 	}
@@ -256,7 +256,7 @@ func Package(name string) PackageInstance {
 			parent: nil,
 			command: &commandArguments{
 				argType: Name,
-				value:   []any{name},
+				value:   name,
 			},
 		},
 	}

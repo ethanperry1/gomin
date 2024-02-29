@@ -9,7 +9,6 @@ type ruleSet struct {
 	evaluators []StatementEvaluator
 	rules      []*ruleSet
 	matchers   []Matcher
-	ruleType   ArgType
 }
 
 func AddRuleSet(r ...*ruleSet) func(*ruleSet) {

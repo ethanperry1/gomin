@@ -8,19 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"github.com/ethanperry1/gomin/pkg/tokens"
 )
 
 type (
-	Parser interface {
-		ParseComment(comment string) (tokens.Comparer, error)
-	}
 	Emplacer interface {
 		Emplace(directory string, fileName string, file *File)
-	}
-	Processor interface {
-		Process(comments []*ast.Comment) ([]tokens.Comparer, error)
 	}
 )
 

@@ -27,8 +27,10 @@ func (err *InvalidCommandArgumentTypeError) Error() string {
 	return fmt.Sprintf("the argType %d is not valid", err.argType)
 }
 
-type InvalidCommandArgumentValueTypeError struct {}
+type InvalidCommandArgumentValueTypeError struct {
+	expected string
+}
 
 func (err *InvalidCommandArgumentValueTypeError) Error() string {
-	return "a command argument contained a value of an unexpected type"
+	return fmt.Sprintf("a command argument contained an unexpected type, where type %q was expected", err.expected)
 }

@@ -1,6 +1,6 @@
-// Package processor processes files, subtracting away only the functions declared in the file.
+// Package api processes files, subtracting away only the functions declared in the file.
 // These functions can be defined through a function declaration syntax or as an inline definition in a variable declaration.
-package processor
+package api
 
 import (
 	"go/ast"
@@ -16,7 +16,7 @@ type FileProcessor struct {
 	fileName  string
 }
 
-func New(
+func NewFileProcessor(
 	fst *token.FileSet,
 	tree *ast.File,
 	directory string,
@@ -27,15 +27,6 @@ func New(
 		tree:      tree,
 		directory: directory,
 		fileName:  fileName,
-	}
-}
-
-func (processor *FileProcessor) processFuncLit(name string, lit *ast.FuncLit) *declarations.Decl {
-	pos := processor.fst.Position(lit.Body.Pos())
-	return &declarations.Decl{
-		Line:   pos.Line,
-		Column: pos.Column,
-		Name:   name,
 	}
 }
 
@@ -85,6 +76,13 @@ func (processor *FileProcessor) processFuncDecl(funcDecl *ast.FuncDecl) []*decla
 		Line:   pos.Line,
 		Column: pos.Column,
 		Name:   funcDecl.Name.Name,
+	}
+
+	if funcDecl.Recv != nil {
+		decl.Name = NamePair{
+			X: processor.parseField(funcDecl.Recv.List[0]),
+			Y: funcDecl.Name.Name,
+		}
 	}
 
 	if funcDecl.Doc != nil {
@@ -167,7 +165,7 @@ func (processor *FileProcessor) processExpr(index int, expr ast.Expr) (int, []*d
 
 func (processor *FileProcessor) parseFuncLit(index int, expr *ast.FuncLit) (int, []*declarations.Decl) {
 	pos := processor.fst.Position(expr.Body.Pos())
-	return index+1, []*declarations.Decl{
+	return index + 1, []*declarations.Decl{
 		{
 			Line:   pos.Line,
 			Column: pos.Column,
@@ -258,4 +256,39 @@ func (processor *FileProcessor) parseKeyValueExpr(index int, expr *ast.KeyValueE
 
 func (processor *FileProcessor) parseEllipsis(index int, expr *ast.Ellipsis) (int, []*declarations.Decl) {
 	return processor.processExpr(index, expr.Elt)
+}
+
+func (processor *FileProcessor) parseField(field *ast.Field) string {
+	return processor.parseFieldExpr(field.Type)
+}
+
+func (processor *FileProcessor) parseFieldExpr(expr ast.Expr) string {
+	switch t := expr.(type) {
+	case *ast.StarExpr:
+		return processor.parseFieldStarExpr(t)
+	case *ast.Ident:
+		return processor.parseFieldIdent(t)
+	case *ast.IndexExpr:
+		return processor.parseFieldIndexExpr(t)
+	case *ast.IndexListExpr:
+		return processor.parseFieldIndexListExpr(t)
+	}
+
+	return ""
+}
+
+func (processor *FileProcessor) parseFieldStarExpr(expr *ast.StarExpr) string {
+	return processor.parseFieldExpr(expr.X)
+}
+
+func (processor *FileProcessor) parseFieldIdent(expr *ast.Ident) string {
+	return expr.Name
+}
+
+func (processor *FileProcessor) parseFieldIndexExpr(expr *ast.IndexExpr) string {
+	return processor.parseFieldExpr(expr.X)
+}
+
+func (processor *FileProcessor) parseFieldIndexListExpr(expr *ast.IndexListExpr) string {
+	return processor.parseFieldExpr(expr.X)
 }

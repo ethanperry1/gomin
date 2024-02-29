@@ -23,7 +23,7 @@ func New(sortedDecls []*Decl) *Declarations {
 	}
 }
 
-func (declarations *Declarations) DeclByPosition(startLine, startCol int) string {
+func (declarations *Declarations) DeclByPosition(startLine, startCol int) any {
 	pos := declarations.search(declarations.sortedDecls, &Decl{
 		Line:   startLine,
 		Column: startCol,

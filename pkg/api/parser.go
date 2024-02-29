@@ -65,7 +65,7 @@ func parseCommandArgs(args CommandArgument) (Matcher, error) {
 	case Any:
 		return NewNoopMatcher(), nil
 	case Fltr:
-		values, err := parseValue[string](args.Value())
+		values, err := parseString(args.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -77,21 +77,21 @@ func parseCommandArgs(args CommandArgument) (Matcher, error) {
 
 		return NewRegexpMatcher(reg.MatchString), nil
 	case Name:
-		values, err := parseValue[string](args.Value())
+		values, err := parseString(args.Value())
 		if err != nil {
 			return nil, err
 		}
 
 		return NewExactMatcher(values), nil
 	case Pair:
-		values, err := parseValue[NamePair](args.Value())
+		values, err := parseNamePair(args.Value())
 		if err != nil {
 			return nil, err
 		}
 
 		return NewExactPairMatcher(values), nil
 	case Index:
-		values, err := parseValue[int](args.Value())
+		values, err := parseInt(args.Value())
 		if err != nil {
 			return nil, err
 		}
@@ -104,10 +104,34 @@ func parseCommandArgs(args CommandArgument) (Matcher, error) {
 	}
 }
 
-func parseValue[T any](v any) (T, error) {
-	arg, ok := v.(T)
+func parseString(v any) (string, error) {
+	arg, ok := v.(string)
 	if !ok {
-		return arg, &InvalidCommandArgumentValueTypeError{}
+		return arg, &InvalidCommandArgumentValueTypeError{
+			expected: "string",
+		}
+	}
+
+	return arg, nil
+}
+
+func parseNamePair(v any) (NamePair, error) {
+	arg, ok := v.(NamePair)
+	if !ok {
+		return arg, &InvalidCommandArgumentValueTypeError{
+			expected: "NamePair",
+		}
+	}
+
+	return arg, nil
+}
+
+func parseInt(v any) (int, error) {
+	arg, ok := v.(int)
+	if !ok {
+		return arg, &InvalidCommandArgumentValueTypeError{
+			expected: "int",
+		}
 	}
 
 	return arg, nil

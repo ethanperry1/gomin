@@ -9,7 +9,12 @@ type RegexpMatcher struct {
 }
 
 func (matcher *RegexpMatcher) Match(matches any) bool {
-	return matcher.matchString(matches.(string))
+	m, ok := matches.(string)
+	if !ok {
+		return false
+	}
+
+	return matcher.matchString(m)
 }
 
 func NewRegexpMatcher(matchString func(s string) bool) *RegexpMatcher {
@@ -39,7 +44,17 @@ func NewExactMatcher(match string) *ExactMatcher {
 }
 
 func (matcher *ExactMatcher) Match(matches any) bool {
-	return matcher.match == matches.(string)
+	var res string
+	switch m := matches.(type) {
+	case NamePair:
+		res = m.Y
+	case string:
+		res = m
+	default:
+		return false
+	}
+
+	return matcher.match == res
 }
 
 type NamePair struct {
@@ -58,7 +73,11 @@ func NewExactPairMatcher(pair NamePair) *ExactPairMatcher {
 }
 
 func (matcher *ExactPairMatcher) Match(matches any) bool {
-	pair := matches.(*NamePair)
+	pair, ok := matches.(NamePair)
+	if !ok {
+		return false
+	}
+
 	return matcher.pair.X == pair.X && matcher.pair.Y == pair.Y
 }
 
@@ -73,5 +92,10 @@ func NewIndexMatcher(index int) *IndexMatcher {
 }
 
 func (matcher *IndexMatcher) Match(matches any) bool {
-	return matcher.index == matches.(int)
+	m, ok := matches.(int)
+	if !ok {
+		return false
+	}
+
+	return matcher.index == m
 }
