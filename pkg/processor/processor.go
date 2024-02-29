@@ -8,13 +8,6 @@ import (
 	"go/token"
 
 	"github.com/ethanperry1/gomin/pkg/declarations"
-	"github.com/ethanperry1/gomin/pkg/tokens"
-)
-
-type (
-	Parser interface {
-		ParseComment(comment string, parents ...tokens.Comparer) (tokens.Comparer, error)
-	}
 )
 
 type FileProcessor struct {
