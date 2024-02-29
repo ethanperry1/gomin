@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/ethanperry1/gomin/pkg/api"
+	"github.com/ethanperry1/gomin/v0"
 )
 
 func main() {
