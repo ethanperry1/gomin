@@ -1,5 +1,6 @@
 package v0
 
+type GlobalOption func() ([]*ruleSet, error)
 type Option func() ([]*ruleSet, error)
 
 type ArgType int

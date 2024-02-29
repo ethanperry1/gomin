@@ -1,5 +1,16 @@
-[pkg/visitor]                                   actual coverage was 0.00 where coverage of at least 0.70 was expected
-[v0]                                            actual coverage was 0.15 where coverage of at least 0.70 was expected
-[pkg/declarations]                              actual coverage was 0.00 where coverage of at least 0.70 was expected
-[pkg/profiles]                                  actual coverage was 0.60 where coverage of at least 0.70 was expected
-[pkg/profiles, profiles.go, ProfilesByName.Get] actual coverage was 0.00 where coverage of at least 0.70 was expected
+pkg/declarations declarations.go 0  12  0.00 true 
+pkg/profiles     profiles.go     3  5   0.60 true 
+pkg/visitor      visitor.go      0  33  0.00 true 
+v0               processor.go    0  114 0.00 true 
+v0               construct.go    0  20  0.00 true 
+v0               comparable.go   4  24  0.17 true 
+v0               matcher.go      5  24  0.21 true 
+v0               reader.go       0  43  0.00 true 
+v0               ruleset.go      24 24  1.00 true 
+v0               nodes.go        10 10  1.00 true 
+v0               writer.go       0  13  0.00 true 
+v0               evaluate.go     12 32  0.38 true 
+v0               commands.go     6  11  0.55 true 
+v0               parser.go       0  55  0.00 true 
+v0               errors.go       0  4   0.00 true 
+v0               format.go       0  23  0.00 true 

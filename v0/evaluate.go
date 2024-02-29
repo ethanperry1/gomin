@@ -30,9 +30,15 @@ type Evaluator struct {
 }
 
 func (evaluator *Evaluator) Evaluate(
+	global float64,
 	options ...Option,
 ) (StatementNode, error) {
-	rs, err := ParseOptions(options...)
+	cmd, err := NewMinimumCommand(global)
+	if err != nil {
+		return nil, err
+	}
+
+	rs, err := ParseOptions(cmd, options...)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +47,7 @@ func (evaluator *Evaluator) Evaluate(
 }
 
 func ParseOptions(
+	global StatementEvaluator,
 	options ...Option,
 ) (*ruleSet, error) {
 	var ruleSets []*ruleSet
@@ -53,6 +60,7 @@ func ParseOptions(
 	}
 
 	return NewRuleSet(
+		AddEvaluator(global),
 		AddRuleSet(ruleSets...),
 		AddMatcher(NewNoopMatcher()),
 	), nil

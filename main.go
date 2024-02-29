@@ -21,6 +21,7 @@ func run() error {
 	}
 
 	results, err := evaluator.Evaluate(
+		0.4,
 		v0.Min(
 			0.7,
 			v0.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
@@ -30,6 +31,8 @@ func run() error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(v0.Validate(results))
 
 	file, err := os.Create("coverage_table.txt")
 	if err != nil {
