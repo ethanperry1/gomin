@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
 	"github.com/ethanperry1/gomin/pkg/api"
 )
@@ -23,14 +23,19 @@ func run() error {
 	results, err := evaluator.Evaluate(
 		api.Min(
 			0.7,
-			api.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "New"),
+			api.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
+			api.AllPackages(),
 		),
 	)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(results)
+	file, err := os.Create("coverage_table.txt")
+	if err != nil {
+		return err
+	}
 
-	return nil
+	writer := api.NewWriter()
+	return writer.Write(file, api.Format(results, api.FileDepth))
 }

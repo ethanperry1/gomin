@@ -1,0 +1,4 @@
+pkg/declarations 0  12  0.00 false actual coverage was 0.00 where coverage of at least 0.70 was expected
+pkg/profiles     3  5   0.60 false actual coverage was 0.60 where coverage of at least 0.70 was expected
+pkg/visitor      0  33  0.00 false actual coverage was 0.00 where coverage of at least 0.70 was expected
+pkg/api          61 379 0.16 false actual coverage was 0.16 where coverage of at least 0.70 was expected

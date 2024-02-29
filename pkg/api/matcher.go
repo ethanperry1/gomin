@@ -77,7 +77,6 @@ func (matcher *ExactPairMatcher) Match(matches any) bool {
 	if !ok {
 		return false
 	}
-
 	return matcher.pair.X == pair.X && matcher.pair.Y == pair.Y
 }
 
