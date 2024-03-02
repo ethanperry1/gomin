@@ -41,7 +41,4 @@ What is this doing?
 
 In this example, the global coverage threshold was 40%, which is set with the first parameter.
 
-| Syntax      | Description | Test Text     |
-|---|---|---|
-| Header      | Title       | Here's this   |
-| Paragraph   | Text        | And more      |
+[View an example generated report.](./coverage_report.md). Reports will begin with a green circle when successful and red in failure conditions.
