@@ -10,6 +10,11 @@ const (
 	MarkdownTemplate = `
 # GoMin Coverage Report {{ if .Valid }}🟢{{ else }}🔴{{ end }}
 
+## Global Coverage
+| Statements Covered  | Total Statements | Ratio |
+|---|---|---|
+|{{ range .Global }}{{.}}|{{ end }}
+
 ## Coverage Errors
 
 | Place | Error |
@@ -18,28 +23,35 @@ const (
 {{end}}
 
 ## Package Coverage
-| Package Name | Lines Covered | Statements Covered | Ratio | Valid | Error |
+| Package Name | Statements Covered  | Total Statements | Ratio | Valid | Error |
 |---|---|---|---|---|---|
 {{ range .Package }}|{{ range . }}{{.}}|{{ end }}
 {{end}}
 
 ## File Coverage
 
-| Package Name | File Name | Lines Covered | Statements Covered | Ratio | Valid | Error |
+| Package Name | File Name | Statements Covered  | Total Statements | Ratio | Valid | Error |
 |---|---|---|---|---|---|---|
 {{ range .File }}|{{ range . }}{{ if . }}{{.}}{{else}}n/a{{end}}|{{ end }}
 {{end}}
 
 ## Block Coverage
 
-| Package Name | File Name | Function Name | Lines Covered | Statements Covered | Ratio | Valid | Error |
+| Package Name | File Name | Function Name | Statements Covered  | Total Statements | Ratio | Valid | Error |
 |---|---|---|---|---|---|---|---|
 {{ range .Block }}|{{ range . }}{{.}}|{{ end }}
 {{end}}
 `
 )
 
+type Global struct {
+	Covered    string
+	Statements string
+	Ratio      string
+}
+
 type MarkDownTemplate struct {
+	Global  []string
 	Errors  [][]string
 	Package [][]string
 	File    [][]string
@@ -81,6 +93,7 @@ func (outputter *MarkdownOutputter) WriteOut(node StatementNode) error {
 
 	errs := outputter.ErrorsToRecord(outputter.Validate(node))
 	return writer.Write(MarkDownTemplate{
+		Global:  createRecord(node),
 		Errors:  errs,
 		Package: outputter.Format(node, PackageDepth),
 		File:    outputter.Format(node, FileDepth),

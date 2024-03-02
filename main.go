@@ -18,24 +18,24 @@ func run() error {
 	}
 
 	results, err := evaluator.Evaluate(
-		0.4,
-		v0.Min(
-			0.9,
-			v0.AllFiles(),
-		),
-		v0.Min(
-			0.0,
-			v0.AllPackages().Filter("pkg").Functions().Filter("New"),
-		),
-		v0.Fallback(
-			0.99,
-			v0.AllFunctions(),
-		),
-		v0.Exclude(
-			v0.AllPackages().Filter("v0"),
-			v0.AllPackages().Filter("visitor"),
-			v0.AllPackages().Filter("declarations"),
-		),
+		0.0,
+		// v0.Min(
+		// 	0.9,
+		// 	v0.AllFiles(),
+		// ),
+		// v0.Min(
+		// 	0.0,
+		// 	v0.AllPackages().Filter("pkg").Functions().Filter("New"),
+		// ),
+		// v0.Fallback(
+		// 	0.99,
+		// 	v0.AllFunctions(),
+		// ),
+		// v0.Exclude(
+		// 	v0.AllPackages().Filter("v0"),
+		// 	v0.AllPackages().Filter("visitor"),
+		// 	v0.AllPackages().Filter("declarations"),
+		// ),
 	)
 	if err != nil {
 		return err
