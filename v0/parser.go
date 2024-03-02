@@ -2,6 +2,19 @@ package v0
 
 import "regexp"
 
+func Fallback(min float64, surfaces ...CommandSurface) Option {
+	return func() ([]*ruleSet, error) {
+		eval, err := NewMinimumCommand(min)
+		if err != nil {
+			return nil, err
+		}
+
+		fallback := NewFallbackCommand(eval)
+
+		return parseCommandSurfaces(fallback, surfaces...)
+	}
+}
+
 func Min(min float64, surfaces ...CommandSurface) Option {
 	return func() ([]*ruleSet, error) {
 		eval, err := NewMinimumCommand(min)

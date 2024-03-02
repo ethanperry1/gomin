@@ -42,12 +42,35 @@ func (builder *packagesRuleBuilder) Filter(s string) PackageContext {
 	}
 }
 
+func (builder *packagesRuleBuilder) genericSurface() CommandSurface {
+	return &commandSurface{
+		parent: builder.CommandSurface,
+		command: &commandArguments{
+			argType: Any,
+		},
+	}
+}
+
+func (builder *packagesRuleBuilder) Parent() (CommandSurface, bool) {
+	return builder.genericSurface().Parent()
+}
+
+func (builder *packagesRuleBuilder) Command() CommandArgument {
+	return builder.genericSurface().Command()
+}
+
 type packageContextRuleBuilder struct {
 	CommandSurface
 }
 
 func (builder *packageContextRuleBuilder) Files() Files {
 	return &filesRuleBuilder{
+		CommandSurface: builder.CommandSurface,
+	}
+}
+
+func (builder *packageContextRuleBuilder) Functions() Functions {
+	return &functionsRuleBuilder{
 		CommandSurface: &commandSurface{
 			parent: builder.CommandSurface,
 			command: &commandArguments{
@@ -73,18 +96,30 @@ func (builder *filesRuleBuilder) Filter(s string) FileContext {
 	}
 }
 
+func (builder *filesRuleBuilder) genericSurface() CommandSurface {
+	return &commandSurface{
+		parent: builder.CommandSurface,
+		command: &commandArguments{
+			argType: Any,
+		},
+	}
+}
+
+func (builder *filesRuleBuilder) Parent() (CommandSurface, bool) {
+	return builder.genericSurface().Parent()
+}
+
+func (builder *filesRuleBuilder) Command() CommandArgument {
+	return builder.genericSurface().Command()
+}
+
 type fileContextRuleBuilder struct {
 	CommandSurface
 }
 
 func (builder *fileContextRuleBuilder) Functions() Functions {
 	return &functionsRuleBuilder{
-		CommandSurface: &commandSurface{
-			parent: builder.CommandSurface,
-			command: &commandArguments{
-				argType: Any,
-			},
-		},
+		CommandSurface: builder.CommandSurface,
 	}
 }
 
@@ -104,6 +139,23 @@ func (builder *functionsRuleBuilder) Filter(s string) CommandSurface {
 	}
 }
 
+func (builder *functionsRuleBuilder) genericSurface() CommandSurface {
+	return &commandSurface{
+		parent: builder.CommandSurface,
+		command: &commandArguments{
+			argType: Any,
+		},
+	}
+}
+
+func (builder *functionsRuleBuilder) Parent() (CommandSurface, bool) {
+	return builder.genericSurface().Parent()
+}
+
+func (builder *functionsRuleBuilder) Command() CommandArgument {
+	return builder.genericSurface().Command()
+}
+
 type functionCommandSurface struct {
 	CommandSurface
 }
@@ -114,24 +166,14 @@ type packageInstanceRuleBuilder struct {
 
 func (builder *packageInstanceRuleBuilder) Files() Files {
 	return &filesRuleBuilder{
-		CommandSurface: &commandSurface{
-			parent: builder.CommandSurface,
-			command: &commandArguments{
-				argType: Any,
-			},
-		},
+		CommandSurface: builder.CommandSurface,
 	}
 }
 
 func (builder *packageInstanceRuleBuilder) Functions() Functions {
 	return &functionsRuleBuilder{
 		CommandSurface: &commandSurface{
-			parent: &commandSurface{
-				parent: builder.CommandSurface,
-				command: &commandArguments{
-					argType: Any,
-				},
-			},
+			parent: builder.CommandSurface,
 			command: &commandArguments{
 				argType: Any,
 			},
@@ -157,12 +199,7 @@ type fileInstanceRuleBuilder struct {
 
 func (builder *fileInstanceRuleBuilder) Functions() Functions {
 	return &functionsRuleBuilder{
-		CommandSurface: &commandSurface{
-			parent: builder.CommandSurface,
-			command: &commandArguments{
-				argType: Any,
-			},
-		},
+		CommandSurface: builder.CommandSurface,
 	}
 }
 
@@ -203,25 +240,13 @@ func (builder *fileInstanceRuleBuilder) Literal(index int) CommandSurface {
 }
 
 func AllPackages() Packages {
-	return &packagesRuleBuilder{
-		CommandSurface: &commandSurface{
-			parent: nil,
-			command: &commandArguments{
-				argType: Any,
-			},
-		},
-	}
+	return &packagesRuleBuilder{}
 }
 
 func AllFiles() Files {
 	return &filesRuleBuilder{
 		CommandSurface: &commandSurface{
-			parent: &commandSurface{
-				parent: nil,
-				command: &commandArguments{
-					argType: Any,
-				},
-			},
+			parent: nil,
 			command: &commandArguments{
 				argType: Any,
 			},
@@ -233,12 +258,7 @@ func AllFunctions() Functions {
 	return &functionsRuleBuilder{
 		CommandSurface: &commandSurface{
 			parent: &commandSurface{
-				parent: &commandSurface{
-					parent: nil,
-					command: &commandArguments{
-						argType: Any,
-					},
-				},
+				parent: nil,
 				command: &commandArguments{
 					argType: Any,
 				},

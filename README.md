@@ -11,42 +11,37 @@ go get github.com/ethanperry1/gomin
 ```
 
 ```go
-import (
-	"os"
-
-	"github.com/ethanperry1/gomin/v0"
+results, err := evaluator.Evaluate(
+	0.4,
+	v0.Min( // Rule #1
+		0.9,
+		v0.AllFiles(),
+	),
+	v0.Min( // Rule #2
+		0.1,
+		v0.AllPackages().Filter("pkg/").Functions().Filter("New"),
+	),
+	v0.Fallback( // Rule #3
+		0.95,
+		v0.AllFunctions(),
+	),
+	v0.Exclude(
+		v0.AllPackages().Filter("v0"),
+		v0.AllPackages().Filter("visitor"),
+		v0.AllPackages().Filter("declarations"),
+	),
 )
-
-func main() {
-	err := run()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func run() error {
-	evaluator, err := api.CreateEvaluator(".", "profile", "github.com/ethanperry1/gomin")
-	if err != nil {
-		return err
-	}
-
-	results, err := evaluator.Evaluate(
-		api.Min(
-			0.7,
-			api.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
-			api.AllPackages(),
-		),
-	)
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create("coverage_table.txt")
-	if err != nil {
-		return err
-	}
-
-	writer := api.NewWriter()
-	return writer.Write(file, api.Format(results, api.FileDepth))
-}
 ```
+
+What is this doing?
+1. Validating that all files have at least 90% unit test coverage.
+2. Validating that functions which matches "New" in any package which matches "pkg/" have at least 10% coverage.
+3. For all functions which have not yet had rules applied, validate that these have at least 95% coverage.
+4. Exclude any packages matching v0, visitor, or declarations from the global unit test coverage calculation.
+
+In this example, the global coverage threshold was 40%, which is set with the first parameter.
+
+| Syntax      | Description | Test Text     |
+|---|---|---|
+| Header      | Title       | Here's this   |
+| Paragraph   | Text        | And more      |

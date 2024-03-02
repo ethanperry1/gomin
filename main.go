@@ -1,9 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/ethanperry1/gomin/v0"
 )
 
@@ -23,22 +20,27 @@ func run() error {
 	results, err := evaluator.Evaluate(
 		0.4,
 		v0.Min(
-			0.7,
-			v0.Package("pkg/profiles").File("profiles.go").Method("ProfilesByName", "Get"),
-			v0.AllPackages(),
+			0.9,
+			v0.AllFiles(),
+		),
+		v0.Min(
+			0.0,
+			v0.AllPackages().Filter("pkg").Functions().Filter("New"),
+		),
+		v0.Fallback(
+			0.99,
+			v0.AllFunctions(),
+		),
+		v0.Exclude(
+			v0.AllPackages().Filter("v0"),
+			v0.AllPackages().Filter("visitor"),
+			v0.AllPackages().Filter("declarations"),
 		),
 	)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(v0.Validate(results))
-
-	file, err := os.Create("coverage_table.txt")
-	if err != nil {
-		return err
-	}
-
-	writer := v0.NewWriter()
-	return writer.Write(file, v0.Format(results, v0.FileDepth))
+	out := v0.NewMarkdownOutputter()
+	return out.WriteOut(results)
 }

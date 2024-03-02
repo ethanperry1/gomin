@@ -1,4 +1,3 @@
-//gomin:pkg:default:file:regex:profiles.go:exclude
 package profiles
 
 import "golang.org/x/tools/cover"
@@ -22,8 +21,3 @@ func New(profiles []*cover.Profile) *ProfilesByName {
 func (profiles *ProfilesByName) Get(fileName string) *cover.Profile {
 	return profiles.profiles[fileName]
 }
-
-type Example[T any] struct {}
-
-func (e *Example[T]) E() {}
-func (e Example[T]) s() {}

@@ -28,6 +28,7 @@ func (command *MinimumCommand) Apply(statements Statements) Statements {
 	}
 
 	return &evaluatedStatements{
+		previous:   statements,
 		Statements: statements,
 	}
 }
@@ -52,6 +53,26 @@ func NewNoopCommand() *NoopCommand {
 }
 
 func (command *NoopCommand) Apply(statements Statements) Statements {
+	return &evaluatedStatements{
+		Statements: statements,
+	}
+}
+
+type FallbackCommand struct {
+	fallback StatementEvaluator
+}
+
+func NewFallbackCommand(fallback StatementEvaluator) *FallbackCommand {
+	return &FallbackCommand{
+		fallback: fallback,
+	}
+}
+
+func (command *FallbackCommand) Apply(statements Statements) Statements {
+	if statements.Previous() == nil {
+		return command.fallback.Apply(statements)
+	}
+
 	return &evaluatedStatements{
 		Statements: statements,
 	}

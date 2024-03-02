@@ -48,6 +48,7 @@ type FileParent interface {
 
 type PackageContext interface {
 	FileParent
+	FunctionParent
 	CommandSurface
 }
 
