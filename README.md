@@ -2,8 +2,6 @@
 
 Raise the bar for your code quality and unit test coverage.
 
-_Warning:_ This library is still under development and may contain unresolved bugs.
-
 ## Example Usage
 
 ```sh
