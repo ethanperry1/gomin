@@ -39,4 +39,6 @@ What is this doing?
 
 In this example, the global coverage threshold was 40%, which is set with the first parameter.
 
+_Note_: The statements are evaluated in order, and as such the recommended ordering of statements is to first exclude any code that shouldn't be included in the coverage totals, then to evaluate coverage minimums lower than the "fallbacks," then evaluate the "fallback" coverage minimums, and finally evaluate any coverage minimums that should be higher than the fallbacks. If this was in the reversed order, then the fallback code coverage minimums would be evaluated prior to excluding files or checking a lower coverage bar, for example.
+
 [View an example generated report.](./coverage_report.md). Reports will begin with a green circle when successful and red in failure conditions.
